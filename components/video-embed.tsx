@@ -115,21 +115,19 @@ export function VideoEmbed({ videoUrl, title }: VideoEmbedProps) {
         <p className="text-sm text-gray-600 mb-4">
           {title || 'Training Video'}
         </p>
-        <Button
-          asChild
-          variant="default"
-          className="bg-crej-primary hover:bg-crej-dark"
+        <a
+          href={videoUrl}
+          target="_blank"
+          rel="noopener noreferrer"
         >
-          <a
-            href={videoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center space-x-2"
+          <Button
+            variant="default"
+            className="bg-crej-primary hover:bg-crej-dark"
           >
             <ExternalLink className="h-4 w-4" />
             <span>Open Training Video</span>
-          </a>
-        </Button>
+          </Button>
+        </a>
         <p className="text-xs text-gray-500 mt-2">
           Video opens in a new tab
         </p>

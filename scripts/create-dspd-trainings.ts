@@ -419,7 +419,7 @@ async function main() {
   // Create all required trainings
   console.log('\nCreating required trainings...');
   for (const trainingData of allRequiredTrainings) {
-    const { requiredRoles, contentItemId, ...trainingInfo } = trainingData;
+    const { requiredRoles, contentItemId, ...trainingInfo } = trainingData as any;
 
     // Check if training already exists (for Start Here)
     const existing = await prisma.training.findFirst({

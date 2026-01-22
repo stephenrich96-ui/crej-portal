@@ -83,22 +83,21 @@ export default async function TrainingDetailPage({ params }: PageProps) {
               <CardTitle className="text-lg font-semibold text-black">Training Document</CardTitle>
             </CardHeader>
             <CardContent>
-              <Button
-                asChild
-                variant="default"
-                className="bg-crej-primary hover:bg-crej-dark"
+              <a
+                href={training.documentUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center space-x-2"
               >
-                <a
-                  href={training.documentUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center space-x-2"
+                <Button
+                  variant="default"
+                  className="bg-crej-primary hover:bg-crej-dark"
                 >
                   <FileText className="h-4 w-4" />
                   <span>Open Training Document</span>
                   <ExternalLink className="h-4 w-4" />
-                </a>
-              </Button>
+                </Button>
+              </a>
               <p className="text-xs text-gray-500 mt-2">
                 Document opens in a new tab
               </p>

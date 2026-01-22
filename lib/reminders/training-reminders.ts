@@ -15,16 +15,8 @@ interface TrainingWithDeadline {
  * Get all trainings with deadlines that need reminders
  */
 export async function getTrainingsNeedingReminders(): Promise<TrainingWithDeadline[]> {
-  const trainings = await prisma.training.findMany({
-    where: {
-      OR: [
-        { title: { contains: 'Medicaid 101', mode: 'insensitive' } },
-        { title: { contains: 'SELN', mode: 'insensitive' } },
-        { description: { contains: '30-day', mode: 'insensitive' } },
-        { description: { contains: 'due by', mode: 'insensitive' } },
-        { description: { contains: 'June 5, 2026', mode: 'insensitive' } },
-      ],
-    },
+  // Get all trainings and filter in JavaScript (SQLite doesn't support case-insensitive mode)
+  const allTrainings = await prisma.training.findMany({
     include: {
       requirements: true,
       completions: {
@@ -33,6 +25,19 @@ export async function getTrainingsNeedingReminders(): Promise<TrainingWithDeadli
         },
       },
     },
+  });
+
+  // Filter trainings that match our criteria (case-insensitive)
+  const trainings = allTrainings.filter(t => {
+    const titleLower = t.title.toLowerCase();
+    const descLower = (t.description || '').toLowerCase();
+    return (
+      titleLower.includes('medicaid 101') ||
+      titleLower.includes('seln') ||
+      descLower.includes('30-day') ||
+      descLower.includes('due by') ||
+      descLower.includes('june 5, 2026')
+    );
   });
 
   const trainingsNeedingReminders: TrainingWithDeadline[] = [];

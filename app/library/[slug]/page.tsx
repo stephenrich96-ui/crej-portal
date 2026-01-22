@@ -32,7 +32,7 @@ export default async function ContentPage({ params }: PageProps) {
   }
 
   // Check access
-  if (!canAccessProgram(session.roles, content.program)) {
+  if (!canAccessProgram(session.roles, content.program as 'DSPD' | 'HRSS' | 'EPAS')) {
     redirect('/library');
   }
 
@@ -51,7 +51,7 @@ export default async function ContentPage({ params }: PageProps) {
             <p className="mt-2 text-gray-600">{content.summary}</p>
           )}
           <div className="flex space-x-2 mt-4">
-            <span className="text-xs px-2 py-1 bg-crej-light text-crej-primary rounded">
+            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">
               {content.program}
             </span>
             <span className="text-xs px-2 py-1 bg-gray-100 text-gray-800 rounded">
