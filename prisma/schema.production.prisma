@@ -1,0 +1,13 @@
+// Prisma schema for CREJ Staff Portal - PRODUCTION (Postgres)
+// Copy this to schema.prisma for production deployment
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"  // Use postgresql for production
+  url      = env("DATABASE_URL")
+}
+
+// ... rest of schema stays the same ...
