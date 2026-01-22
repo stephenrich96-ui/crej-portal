@@ -12,38 +12,33 @@ function LoginForm() {
   const error = searchParams.get('error');
 
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [magicLink, setMagicLink] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setMessage('');
-    setMagicLink('');
+    setErrorMessage('');
 
     try {
-      const response = await fetch('/api/auth/magic-link', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to send magic link');
+        throw new Error(data.error || 'Login failed');
       }
 
-      if (data.magicLink) {
-        // Dev mode - show link
-        setMagicLink(data.magicLink);
-        setMessage('Development mode: Click the link below to login');
-      } else {
-        setMessage('Check your email for the magic link');
-      }
+      // Success - redirect to home
+      router.push('/');
+      router.refresh();
     } catch (err: any) {
-      setMessage(err.message || 'An error occurred');
+      setErrorMessage(err.message || 'An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -54,33 +49,13 @@ function LoginForm() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl font-bold">CREJ Staff Portal</CardTitle>
-          <CardDescription>Sign in with your @crejllc.net email</CardDescription>
+          <CardDescription>Sign in with your email and password</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
+            {(error || errorMessage) && (
               <div className="p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm">
-                {error === 'invalid_token' && 'Invalid or expired link'}
-                {error === 'verification_failed' && 'Verification failed. Please try again.'}
-                {!['invalid_token', 'verification_failed'].includes(error) && 'Login error'}
-              </div>
-            )}
-
-            {message && (
-              <div className={`p-3 border rounded text-sm ${magicLink ? 'bg-green-50 border-green-200 text-green-800' : 'bg-blue-50 border-blue-200 text-blue-800'}`}>
-                {message}
-              </div>
-            )}
-
-            {magicLink && (
-              <div className="p-3 bg-crej-light border border-crej-primary/20 rounded">
-                <p className="text-sm text-crej-primary mb-2">Development Mode - Magic Link:</p>
-                <a 
-                  href={magicLink} 
-                  className="text-sm text-crej-primary underline break-all"
-                >
-                  {magicLink}
-                </a>
+                {errorMessage || (error === 'invalid_token' && 'Invalid or expired link') || (error === 'verification_failed' && 'Verification failed. Please try again.') || 'Login error'}
               </div>
             )}
 
@@ -94,16 +69,29 @@ function LoginForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="your.name@crejllc.net"
-                disabled={loading || !!magicLink}
+                placeholder="your.email@crejllc.net"
+                disabled={loading}
+                className="text-black"
               />
-              <p className="mt-1 text-xs text-gray-500">
-                Must be a @crejllc.net email address
-              </p>
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading || !!magicLink}>
-              {loading ? 'Sending...' : 'Send Magic Link'}
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                Password
+              </label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+                className="text-black"
+              />
+            </div>
+
+            <Button type="submit" className="w-full bg-crej-primary hover:bg-crej-dark" disabled={loading}>
+              {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
         </CardContent>

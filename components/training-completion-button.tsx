@@ -22,13 +22,14 @@ export default function TrainingCompletionButton({ trainingId, isCompleted }: Tr
       });
 
       if (!response.ok) {
-        throw new Error('Failed to mark training as complete');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || 'Failed to mark training as complete');
       }
 
       router.refresh();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error completing training:', error);
-      alert('Failed to mark training as complete');
+      alert(error.message || 'Failed to mark training as complete. Please try again.');
     } finally {
       setLoading(false);
     }

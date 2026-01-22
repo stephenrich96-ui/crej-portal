@@ -19,3 +19,8 @@ export const prisma =
   });
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+
+// Helper to safely access custom models
+export function hasCustomModels() {
+  return prisma && 'customCodeBlock' in prisma && 'customForm' in prisma;
+}

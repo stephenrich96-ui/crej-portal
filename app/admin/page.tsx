@@ -48,16 +48,16 @@ export default async function AdminPage() {
       requiresAdmin: false,
     },
     {
-      href: '/admin/users',
-      title: 'User Management',
-      description: 'Manage users and roles',
-      icon: Users,
+      href: '/admin/trainings/completions',
+      title: 'Training Completions',
+      description: 'View all training completions across all users',
+      icon: FileText,
       requiresAdmin: true,
     },
     {
-      href: '/admin/reports',
-      title: 'Reports & Analytics',
-      description: 'View training completions and usage',
+      href: '/admin/forms',
+      title: 'Custom Code Blocks',
+      description: 'Add custom HTML/React code blocks to any page',
       icon: FileText,
       requiresAdmin: true,
     },
@@ -80,13 +80,15 @@ export default async function AdminPage() {
             const Icon = link.icon;
             return (
               <Link key={link.href} href={link.href}>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+                <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer h-full border-crej-border/50">
                   <CardHeader>
-                    <div className="flex items-center space-x-2">
-                      <Icon className="h-6 w-6 text-crej-primary" />
-                      <CardTitle>{link.title}</CardTitle>
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 rounded-xl bg-crej-primary/10">
+                        <Icon className="h-5 w-5 text-crej-primary" />
+                      </div>
+                      <CardTitle className="text-lg">{link.title}</CardTitle>
                     </div>
-                    <CardDescription>{link.description}</CardDescription>
+                    <CardDescription className="mt-2">{link.description}</CardDescription>
                   </CardHeader>
                 </Card>
               </Link>

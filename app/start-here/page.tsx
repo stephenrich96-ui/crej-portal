@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { CheckCircle2, Circle, ExternalLink, Mail, Calendar, AlertCircle, FileText } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import TrainingCheckbox from '@/components/training-checkbox';
+import { TrainingLinkActions } from '@/components/training-link-actions';
 
 export default async function StartHerePage() {
   const session = await getServerSession();
@@ -92,9 +93,44 @@ export default async function StartHerePage() {
     };
   });
 
+  // Fetch custom code blocks for this page
+  let topCodeBlocks: any[] = [];
+  let bottomCodeBlocks: any[] = [];
+
+  try {
+    // Check if model exists before querying
+    if (prisma && (prisma as any).customCodeBlock) {
+      [topCodeBlocks, bottomCodeBlocks] = await Promise.all([
+        (prisma as any).customCodeBlock.findMany({
+          where: {
+            isActive: true,
+            position: 'TOP',
+            OR: [{ pagePath: null }, { pagePath: '/start-here' }],
+          },
+          orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+        }).catch(() => []),
+        (prisma as any).customCodeBlock.findMany({
+          where: {
+            isActive: true,
+            position: 'BOTTOM',
+            OR: [{ pagePath: null }, { pagePath: '/start-here' }],
+          },
+          orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+        }).catch(() => []),
+      ]);
+    }
+  } catch (error) {
+    console.error('Error fetching custom content:', error);
+    // Continue with empty arrays if custom content fails to load
+  }
+
   return (
     <DashboardLayout user={session}>
       <div className="space-y-6">
+        {/* Top Custom Code Blocks */}
+        {topCodeBlocks.map((block) => (
+          <div key={block.id} dangerouslySetInnerHTML={{ __html: block.code }} />
+        ))}
         <div className="mb-8">
           <h1 className="text-3xl font-semibold text-black tracking-tight">DSPD Support Coordinator Start Here</h1>
           <p className="mt-2 text-base text-black">Complete onboarding guide - follow each step in order</p>
@@ -124,61 +160,15 @@ export default async function StartHerePage() {
           </CardContent>
         </Card>
 
-        {/* Step 1: Access Forms */}
-        <Card className="border border-gray-200 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold text-black">Step 1: Complete Access Forms</CardTitle>
-            <CardDescription>Fill out and submit required forms for USTEPS and UPI access</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <FileText className="h-5 w-5 text-crej-primary" />
-                  <div>
-                    <h3 className="font-medium text-black">Form 0-2: USTEPS Access Form</h3>
-                    <p className="text-sm text-gray-600">DHHS Private Support Coordinator USTEPS Access</p>
-                  </div>
-                </div>
-                <Link href="/forms/0-2-usteps-access">
-                  <Button size="sm" className="bg-crej-primary hover:bg-crej-dark">
-                    Fill Out Form
-                  </Button>
-                </Link>
-              </div>
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <FileText className="h-5 w-5 text-crej-primary" />
-                  <div>
-                    <h3 className="font-medium text-black">Form 0-8: UPI Access Form</h3>
-                    <p className="text-sm text-gray-600">UPI ACCESS Form</p>
-                  </div>
-                </div>
-                <Link href="/forms/0-8-upi-access">
-                  <Button size="sm" className="bg-crej-primary hover:bg-crej-dark">
-                    Fill Out Form
-                  </Button>
-                </Link>
-              </div>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm text-blue-800">
-                  <strong>Next:</strong> Email both completed forms to{' '}
-                  <a href="mailto:usteps@utah.gov" className="underline">usteps@utah.gov</a> using your CREJ email address.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Step 2: Trainings with Deadlines */}
+        {/* Step 1: Trainings with Deadlines */}
         {deadlineInfo.length > 0 && (
           <Card className="border-2 border-red-300 shadow-sm bg-red-50/30">
             <CardHeader>
               <div className="flex items-center space-x-2">
                 <AlertCircle className="h-5 w-5 text-red-600" />
-                <CardTitle className="text-xl font-semibold text-black">Step 2: Complete Trainings with Deadlines</CardTitle>
+                <CardTitle className="text-xl font-semibold text-black">Step 1: Complete Trainings with Deadlines</CardTitle>
               </div>
-              <CardDescription className="text-red-700">These trainings have specific deadlines - complete them first!</CardDescription>
+              <CardDescription className="text-red-700">These trainings have specific deadlines - complete them first! Check them off as you complete each one.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -225,36 +215,13 @@ export default async function StartHerePage() {
                             </p>
                           )}
                           {/* Training Links */}
-                          <div className="mt-3 space-y-2">
-                            {training.videoUrl && (
-                              <a
-                                href={training.videoUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center text-sm text-crej-primary hover:text-crej-dark"
-                              >
-                                <ExternalLink className="h-4 w-4 mr-1" />
-                                Open Training Link
-                              </a>
-                            )}
-                            {training.documentUrl && (
-                              <a
-                                href={training.documentUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center text-sm text-crej-primary hover:text-crej-dark ml-4"
-                              >
-                                <ExternalLink className="h-4 w-4 mr-1" />
-                                Access Portal
-                              </a>
-                            )}
-                            {!training.videoUrl && !training.documentUrl && (
-                              <p className="text-sm text-gray-500">
-                                Access through Utah Learning Portal (ULP):{' '}
-                                <a href="https://utahlearningportal.com" target="_blank" rel="noopener noreferrer" className="text-crej-primary hover:text-crej-dark underline">
-                                  utahlearningportal.com
-                                </a>
-                              </p>
+                          <div className="mt-3">
+                            {training.documentUrl && training.documentUrl.trim() !== '' ? (
+                              <TrainingLinkActions url={training.documentUrl} linkText="Open Training Link" />
+                            ) : training.videoUrl && training.videoUrl.trim() !== '' ? (
+                              <TrainingLinkActions url={training.videoUrl} linkText="Open Training Link" />
+                            ) : (
+                              <TrainingLinkActions url="https://utahlearningportal.com" linkText="Open Utah Learning Portal" />
                             )}
                           </div>
                         </div>
@@ -278,12 +245,12 @@ export default async function StartHerePage() {
           </Card>
         )}
 
-        {/* Step 3: Initial Required Trainings */}
+        {/* Step 2: Initial Required Trainings */}
         {initialRequired.length > 0 && (
           <Card className="border border-gray-200 shadow-sm">
             <CardHeader>
-              <CardTitle className="text-xl font-semibold text-black">Step 3: Initial Required Trainings (Due in 60 Days)</CardTitle>
-              <CardDescription>Complete these trainings within 60 days of assignment</CardDescription>
+              <CardTitle className="text-xl font-semibold text-black">Step 2: Initial Required Trainings (Due in 60 Days)</CardTitle>
+              <CardDescription>Complete these trainings within 60 days of assignment. Check them off as you complete each one.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -317,35 +284,42 @@ export default async function StartHerePage() {
                         )}
                         {/* Training Links */}
                         <div className="mt-2 ml-7">
-                          {training.videoUrl ? (
-                            <a
-                              href={training.videoUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-sm text-crej-primary hover:text-crej-dark inline-flex items-center"
-                            >
-                              <ExternalLink className="h-3 w-3 mr-1" />
-                              Training Link
-                            </a>
+                          {training.documentUrl && training.documentUrl.trim() !== '' ? (
+                            <TrainingLinkActions url={training.documentUrl} linkText="Open Link" />
+                          ) : training.videoUrl && training.videoUrl.trim() !== '' ? (
+                            <TrainingLinkActions url={training.videoUrl} linkText="Open Link" />
                           ) : (
-                            <p className="text-xs text-gray-500">
-                              Access via{' '}
-                              <a href="https://utahlearningportal.com" target="_blank" rel="noopener noreferrer" className="text-crej-primary hover:text-crej-dark underline">
-                                Utah Learning Portal
-                              </a>
-                            </p>
+                            <TrainingLinkActions url="https://utahlearningportal.com" linkText="Open Utah Learning Portal" />
                           )}
                         </div>
                       </div>
-                      <Link href={`/trainings/${training.id}`}>
-                        <Button 
-                          variant={isCompleted ? 'outline' : 'default'} 
-                          size="sm"
-                          className={isCompleted ? '' : 'bg-crej-primary hover:bg-crej-dark'}
-                        >
-                          {isCompleted ? 'Review' : 'Start'}
-                        </Button>
-                      </Link>
+                      <div className="flex flex-col space-y-2">
+                        {training.documentUrl && training.documentUrl.trim() !== '' && (
+                          <a
+                            href={training.documentUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Button 
+                              variant="default" 
+                              size="sm"
+                              className="bg-crej-primary hover:bg-crej-dark w-full"
+                            >
+                              <ExternalLink className="h-4 w-4 mr-1" />
+                              Open Link
+                            </Button>
+                          </a>
+                        )}
+                        <Link href={`/trainings/${training.id}`}>
+                          <Button 
+                            variant={isCompleted ? 'outline' : 'default'} 
+                            size="sm"
+                            className={isCompleted ? 'w-full' : 'bg-crej-primary hover:bg-crej-dark w-full'}
+                          >
+                            {isCompleted ? 'Review' : 'View Details'}
+                          </Button>
+                        </Link>
+                      </div>
                     </div>
                   );
                 })}
@@ -354,12 +328,12 @@ export default async function StartHerePage() {
           </Card>
         )}
 
-        {/* Step 4: FY26 Required Trainings */}
+        {/* Step 3: FY26 Required Trainings */}
         {fy26Required.length > 0 && (
           <Card className="border border-gray-200 shadow-sm">
             <CardHeader>
-              <CardTitle className="text-xl font-semibold text-black">Step 4: More Required Courses (FY26)</CardTitle>
-              <CardDescription>Additional required trainings coming in FY26</CardDescription>
+              <CardTitle className="text-xl font-semibold text-black">Step 3: More Required Courses (FY26)</CardTitle>
+              <CardDescription>Additional required trainings coming in FY26. Check them off as you complete each one.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -412,15 +386,33 @@ export default async function StartHerePage() {
                           )}
                         </div>
                       </div>
-                      <Link href={`/trainings/${training.id}`}>
-                        <Button 
-                          variant={isCompleted ? 'outline' : 'default'} 
-                          size="sm"
-                          className={isCompleted ? '' : 'bg-crej-primary hover:bg-crej-dark'}
-                        >
-                          {isCompleted ? 'Review' : 'Start'}
-                        </Button>
-                      </Link>
+                      <div className="flex flex-col space-y-2">
+                        {training.documentUrl && training.documentUrl.trim() !== '' && (
+                          <a
+                            href={training.documentUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Button 
+                              variant="default" 
+                              size="sm"
+                              className="bg-crej-primary hover:bg-crej-dark w-full"
+                            >
+                              <ExternalLink className="h-4 w-4 mr-1" />
+                              Open Link
+                            </Button>
+                          </a>
+                        )}
+                        <Link href={`/trainings/${training.id}`}>
+                          <Button 
+                            variant={isCompleted ? 'outline' : 'default'} 
+                            size="sm"
+                            className={isCompleted ? 'w-full' : 'bg-crej-primary hover:bg-crej-dark w-full'}
+                          >
+                            {isCompleted ? 'Review' : 'View Details'}
+                          </Button>
+                        </Link>
+                      </div>
                     </div>
                   );
                 })}
@@ -429,12 +421,12 @@ export default async function StartHerePage() {
           </Card>
         )}
 
-        {/* Step 5: Annual Required Trainings */}
+        {/* Step 4: Annual Required Trainings */}
         {annualRequired.length > 0 && (
           <Card className="border border-gray-200 shadow-sm">
             <CardHeader>
-              <CardTitle className="text-xl font-semibold text-black">Step 5: Annual & Alternate Year Required Trainings</CardTitle>
-              <CardDescription>These trainings must be completed annually or every other year</CardDescription>
+              <CardTitle className="text-xl font-semibold text-black">Step 4: Annual & Alternate Year Required Trainings</CardTitle>
+              <CardDescription>These trainings must be completed annually or every other year. Check them off as you complete each one.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -487,15 +479,33 @@ export default async function StartHerePage() {
                           )}
                         </div>
                       </div>
-                      <Link href={`/trainings/${training.id}`}>
-                        <Button 
-                          variant={isCompleted ? 'outline' : 'default'} 
-                          size="sm"
-                          className={isCompleted ? '' : 'bg-crej-primary hover:bg-crej-dark'}
-                        >
-                          {isCompleted ? 'Review' : 'Start'}
-                        </Button>
-                      </Link>
+                      <div className="flex flex-col space-y-2">
+                        {training.documentUrl && training.documentUrl.trim() !== '' && (
+                          <a
+                            href={training.documentUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Button 
+                              variant="default" 
+                              size="sm"
+                              className="bg-crej-primary hover:bg-crej-dark w-full"
+                            >
+                              <ExternalLink className="h-4 w-4 mr-1" />
+                              Open Link
+                            </Button>
+                          </a>
+                        )}
+                        <Link href={`/trainings/${training.id}`}>
+                          <Button 
+                            variant={isCompleted ? 'outline' : 'default'} 
+                            size="sm"
+                            className={isCompleted ? 'w-full' : 'bg-crej-primary hover:bg-crej-dark w-full'}
+                          >
+                            {isCompleted ? 'Review' : 'View Details'}
+                          </Button>
+                        </Link>
+                      </div>
                     </div>
                   );
                 })}
@@ -518,6 +528,11 @@ export default async function StartHerePage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Bottom Custom Code Blocks */}
+        {bottomCodeBlocks.map((block) => (
+          <div key={block.id} dangerouslySetInnerHTML={{ __html: block.code }} />
+        ))}
       </div>
     </DashboardLayout>
   );

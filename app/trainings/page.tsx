@@ -11,30 +11,21 @@ import { formatDate } from '@/lib/utils';
 export default async function TrainingsPage() {
   const session = await getServerSession();
 
-  if (!session || !session.roles || session.roles.length === 0) {
+  if (!session) {
     redirect('/login');
   }
 
-  // Show trainings that either:
-  // 1. Have requirements matching user's roles, OR
-  // 2. Have no requirements (optional trainings)
+  // If user has no roles, redirect to role selection
+  if (!session.roles || session.roles.length === 0) {
+    redirect('/select-role');
+  }
+
+  // Admin can see ALL trainings, others see only their role-specific trainings
+  const isAdmin = session.roles.includes('ADMIN');
+  
+  // Show ALL trainings for now - let users see everything
   const trainings = await prisma.training.findMany({
-    where: {
-      OR: [
-        {
-          requirements: {
-            some: {
-              role: { in: session.roles },
-            },
-          },
-        },
-        {
-          requirements: {
-            none: {},
-          },
-        },
-      ],
-    },
+    where: {},
     include: {
       completions: {
         where: { userId: session.id },
@@ -56,140 +47,155 @@ export default async function TrainingsPage() {
 
   return (
     <DashboardLayout user={session}>
-      <div className="space-y-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-semibold text-black tracking-tight">Trainings</h1>
-          <p className="mt-2 text-base text-black">Complete required trainings for your role</p>
+      <div className="space-y-8">
+        {/* Hero Header */}
+        <div className="bg-white border border-gray-200 rounded-lg p-8 shadow-sm">
+          <div className="flex items-center space-x-4 mb-4">
+            <div className="p-3 bg-gray-100 rounded-lg">
+              <PlayCircle className="h-8 w-8 text-gray-900" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold tracking-tight text-gray-900">Training Center</h1>
+              <p className="mt-2 text-lg text-gray-900">
+                {isAdmin ? 'Manage all trainings across the organization' : 'Complete your required trainings and grow your skills'}
+              </p>
+            </div>
+          </div>
+          <div className="mt-6 flex items-center space-x-6 text-sm text-gray-900">
+            <div className="flex items-center space-x-2">
+              <div className="h-2 w-2 rounded-full bg-gray-900"></div>
+              <span>{trainings.length} Total Trainings</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="h-2 w-2 rounded-full bg-gray-900"></div>
+              <span>{trainings.filter(t => t.completions.length > 0).length} Completed</span>
+            </div>
+          </div>
         </div>
 
         {Object.entries(trainingsByProgram).map(([program, programTrainings]) => {
           if (programTrainings.length === 0) return null;
 
-          // Separate trainings by category
+          // Separate trainings by category based on order
+          // Start Here trainings (order 0)
           const startHere = programTrainings.filter(t => 
-            t.title.toLowerCase().includes('start here')
+            t.order === 0 || t.title.toLowerCase().includes('start here')
           );
           
+          // Trainings with deadlines (order 7)
           const withDeadlines = programTrainings.filter(t => 
-            t.title.toLowerCase().includes('deadline') || 
-            t.title.toLowerCase().includes('due by') ||
-            t.title.toLowerCase().includes('medicaid 101') ||
-            t.title.toLowerCase().includes('seln') ||
-            t.description?.toLowerCase().includes('30-day') ||
-            t.description?.toLowerCase().includes('due by') ||
+            t.order === 7 || t.description?.toLowerCase().includes('deadline') ||
             t.description?.toLowerCase().includes('june 5, 2026')
           );
           
-          // Initial required (order 10-15)
+          // Initial required: order 1-7 (excluding deadline training)
           const initialRequired = programTrainings.filter(t => 
-            !t.title.toLowerCase().includes('start here') &&
+            (t.requirements?.length ?? 0) > 0 && 
+            t.order >= 1 && t.order <= 7 &&
             !withDeadlines.includes(t) &&
-            (t.requirements?.length ?? 0) > 0 &&
-            (t.order >= 10 && t.order < 20)
+            !startHere.includes(t)
           );
           
-          // FY26 required (order 20-35) - includes disability conditions
-          const fy26Required = programTrainings.filter(t => 
-            !t.title.toLowerCase().includes('start here') &&
-            !withDeadlines.includes(t) &&
-            (t.requirements?.length ?? 0) > 0 &&
-            (t.order >= 20 && t.order < 40)
+          // More required (FY26): order 8-24
+          const moreRequired = programTrainings.filter(t => 
+            (t.requirements?.length ?? 0) > 0 && t.order >= 8 && t.order <= 24
           );
           
-          // Annual/Alternate year (order 30-45)
-          const annualRequired = programTrainings.filter(t => 
-            !t.title.toLowerCase().includes('start here') &&
-            !withDeadlines.includes(t) &&
-            (t.requirements?.length ?? 0) > 0 &&
-            (t.order >= 30 && t.order < 50)
-          );
-          
-          // Optional trainings (order 100+ or no requirements)
+          // Optional trainings: order 100+ or no requirements
           const optional = programTrainings.filter(t => 
             (t.requirements?.length ?? 0) === 0 || t.order >= 100
           );
-          
-          // Regular required (everything else with requirements)
-          const regular = programTrainings.filter(t => 
-            !t.title.toLowerCase().includes('start here') &&
-            !withDeadlines.includes(t) &&
-            !initialRequired.includes(t) &&
-            !fy26Required.includes(t) &&
-            !annualRequired.includes(t) &&
-            !optional.includes(t) &&
-            (t.requirements?.length ?? 0) > 0
-          );
 
           return (
-            <Card key={program} className="border border-gray-200 shadow-sm">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-xl font-semibold text-black">{program} Trainings</CardTitle>
-                <CardDescription className="text-sm text-gray-600">
-                  {programTrainings.length} training{programTrainings.length !== 1 ? 's' : ''}
-                </CardDescription>
+            <Card key={program} className="border border-gray-200 shadow-sm bg-white">
+              <CardHeader className="pb-4 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-2xl font-bold text-gray-900 flex items-center space-x-3">
+                      <span className="p-2 bg-gray-100 rounded-xl text-gray-900">{program}</span>
+                      <span>Trainings</span>
+                    </CardTitle>
+                    <CardDescription className="text-sm text-gray-900 mt-2">
+                      {programTrainings.length} training{programTrainings.length !== 1 ? 's' : ''} available
+                    </CardDescription>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
                   {/* Start Here Section */}
                   {startHere.length > 0 && (
-                    <div>
-                      <h3 className="text-lg font-semibold text-black mb-3 pb-2 border-b-2 border-crej-primary">
-                        Start Here
-                      </h3>
-                      <div className="space-y-4">
-                        {startHere.map((training) => {
-                          const isCompleted = training.completions.length > 0;
-                          const completion = training.completions[0];
+                    <div className="relative">
+                      <div className="p-4">
+                        <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center space-x-2">
+                          <span className="p-2 bg-gray-100 rounded-lg">🚀</span>
+                          <span>Start Here</span>
+                        </h3>
+                        <div className="space-y-4">
+                          {startHere.map((training) => {
+                            const isCompleted = training.completions.length > 0;
+                            const completion = training.completions[0];
 
-                          return (
-                            <div
-                              key={training.id}
-                              className={`flex items-center justify-between p-4 border-2 rounded-lg transition-all ${
-                                isCompleted 
-                                  ? 'bg-green-50/50 border-green-300' 
-                                  : 'bg-crej-light border-crej-primary hover:border-crej-dark'
-                              }`}
-                            >
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-2">
-                                  {training.videoUrl ? (
-                                    <PlayCircle className="h-5 w-5 text-crej-primary" />
-                                  ) : (
-                                    <FileText className="h-5 w-5 text-crej-primary" />
+                            return (
+                              <div
+                                key={training.id}
+                                className={`group flex items-center justify-between p-5 border-2 rounded-2xl transition-all duration-300 ${
+                                  isCompleted 
+                                    ? 'bg-green-50 border-green-300' 
+                                    : 'bg-white border-gray-200 hover:border-gray-300'
+                                }`}
+                              >
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-2">
+                                    {training.videoUrl ? (
+                                      <PlayCircle className="h-5 w-5 text-blue-600" />
+                                    ) : (
+                                      <FileText className="h-5 w-5 text-blue-600" />
+                                    )}
+                                    <h3 className="font-semibold text-gray-900">{training.title}</h3>
+                                    {isCompleted && (
+                                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                                    )}
+                                  </div>
+                                  {training.description && (
+                                    <p className="text-sm text-gray-900 mt-1">{training.description}</p>
                                   )}
-                                  <h3 className="font-semibold text-gray-900">{training.title}</h3>
-                                  {isCompleted && (
-                                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                                  {isCompleted && completion && (
+                                    <p className="text-xs text-green-600 mt-2">
+                                      Completed: {formatDate(completion.completedAt)}
+                                    </p>
                                   )}
                                 </div>
-                                {training.description && (
-                                  <p className="text-sm text-gray-600 mt-1">{training.description}</p>
-                                )}
-                                {isCompleted && completion && (
-                                  <p className="text-xs text-green-600 mt-2">
-                                    Completed: {formatDate(completion.completedAt)}
-                                  </p>
-                                )}
+                                <Link href={`/trainings/${training.id}`}>
+                                  <Button 
+                                    variant={isCompleted ? 'outline' : 'default'} 
+                                    size="sm" 
+                                    className={`transition-all duration-300 ${
+                                      isCompleted 
+                                        ? 'border-green-400 text-green-700 hover:bg-green-50' 
+                                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                    }`}
+                                  >
+                                    {isCompleted ? '✓ Review' : '▶ Start'}
+                                  </Button>
+                                </Link>
                               </div>
-                              <Link href={`/trainings/${training.id}`}>
-                                <Button variant={isCompleted ? 'outline' : 'default'} size="sm" className="bg-crej-primary hover:bg-crej-dark">
-                                  {isCompleted ? 'Review' : 'Start'}
-                                </Button>
-                              </Link>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   )}
 
                   {/* Trainings with Deadlines */}
                   {withDeadlines.length > 0 && (
-                    <div>
-                      <h3 className="text-lg font-semibold text-black mb-3 pb-2 border-b-2 border-red-500">
-                        Trainings with Deadlines
-                      </h3>
-                      <div className="space-y-4">
+                    <div className="relative">
+                      <div className="p-4">
+                        <h3 className="text-xl font-bold text-red-700 mb-4 flex items-center space-x-2">
+                          <span className="p-2 bg-red-100 rounded-lg">⏰</span>
+                          <span>Trainings with Deadlines</span>
+                        </h3>
+                        <div className="space-y-4">
                         {withDeadlines.map((training) => {
                           const isCompleted = training.completions.length > 0;
                           const completion = training.completions[0];
@@ -197,16 +203,16 @@ export default async function TrainingsPage() {
                           return (
                             <div
                               key={training.id}
-                              className={`flex items-center justify-between p-4 border-2 rounded-lg transition-all ${
+                              className={`group flex items-center justify-between p-5 border-2 rounded-2xl transition-all duration-300 ${
                                 isCompleted 
-                                  ? 'bg-green-50/50 border-green-300' 
-                                  : 'bg-red-50/50 border-red-300 hover:border-red-400'
+                                  ? 'bg-green-50 border-green-300' 
+                                  : 'bg-red-50 border-red-300 hover:border-red-400'
                               }`}
                             >
                               <div className="flex-1">
                                 <div className="flex items-center space-x-2 flex-wrap gap-2">
                                   {training.videoUrl ? (
-                                    <PlayCircle className="h-5 w-5 text-crej-primary" />
+                                    <PlayCircle className="h-5 w-5 text-blue-600" />
                                   ) : (
                                     <FileText className="h-5 w-5 text-gray-600" />
                                   )}
@@ -228,217 +234,133 @@ export default async function TrainingsPage() {
                                 )}
                               </div>
                               <Link href={`/trainings/${training.id}`}>
-                                <Button variant={isCompleted ? 'outline' : 'default'} size="sm" className="bg-crej-primary hover:bg-crej-dark">
+                                <Button variant={isCompleted ? 'outline' : 'default'} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
                                   {isCompleted ? 'Review' : 'Start'}
                                 </Button>
                               </Link>
                             </div>
                           );
                         })}
+                        </div>
                       </div>
                     </div>
                   )}
 
-                  {/* Initial Required Trainings (60 days) */}
+                  {/* Required Trainings */}
                   {initialRequired.length > 0 && (
-                    <div>
-                      <h3 className="text-lg font-semibold text-black mb-3 pb-2 border-b border-crej-primary">
-                        Initial Required Trainings (Due in 60 Days)
-                      </h3>
-                      <div className="space-y-4">
-                        {initialRequired.map((training) => {
-                          const isCompleted = training.completions.length > 0;
-                          const completion = training.completions[0];
+                    <div className="relative">
+                      <div className="p-4">
+                        <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center space-x-2">
+                          <span className="p-2 bg-gray-100 rounded-lg">📋</span>
+                          <span>Required Trainings</span>
+                        </h3>
+                        <p className="text-sm text-gray-900 mb-4">Initial course assignments (due in 60 days)</p>
+                        <div className="space-y-4">
+                          {initialRequired.map((training) => {
+                            const isCompleted = training.completions.length > 0;
+                            const completion = training.completions[0];
 
-                          return (
-                            <div
-                              key={training.id}
-                              className={`flex items-center justify-between p-4 border rounded-lg transition-all ${
-                                isCompleted ? 'bg-green-50/50 border-green-200' : 'bg-white border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-2">
-                                  {training.videoUrl ? (
-                                    <PlayCircle className="h-5 w-5 text-crej-primary" />
-                                  ) : (
-                                    <FileText className="h-5 w-5 text-gray-600" />
+                            return (
+                              <div
+                                key={training.id}
+                                className={`group flex items-center justify-between p-5 border-2 rounded-2xl transition-all duration-300 ${
+                                  isCompleted 
+                                    ? 'bg-green-50 border-green-300' 
+                                    : 'bg-white border-gray-200 hover:border-gray-300'
+                                }`}
+                              >
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-2">
+                                    {training.videoUrl ? (
+                                      <PlayCircle className="h-5 w-5 text-blue-600" />
+                                    ) : (
+                                      <FileText className="h-5 w-5 text-blue-600" />
+                                    )}
+                                    <h3 className="font-semibold text-gray-900">{training.title}</h3>
+                                    {isCompleted && (
+                                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                                    )}
+                                  </div>
+                                  {training.description && (
+                                    <p className="text-sm text-gray-900 mt-1">{training.description}</p>
                                   )}
-                                  <h3 className="font-medium text-gray-900">{training.title}</h3>
-                                  {isCompleted && (
-                                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                                  {isCompleted && completion && (
+                                    <p className="text-xs text-green-600 mt-2">
+                                      Completed: {formatDate(completion.completedAt)}
+                                    </p>
                                   )}
                                 </div>
-                                {training.description && (
-                                  <p className="text-sm text-gray-600 mt-1">{training.description}</p>
-                                )}
-                                {isCompleted && completion && (
-                                  <p className="text-xs text-green-600 mt-2">
-                                    Completed: {formatDate(completion.completedAt)}
-                                  </p>
-                                )}
+                                <Link href={`/trainings/${training.id}`}>
+                                  <Button 
+                                    variant={isCompleted ? 'outline' : 'default'} 
+                                    size="sm" 
+                                    className={`transition-all duration-300 ${
+                                      isCompleted 
+                                        ? 'border-green-400 text-green-700 hover:bg-green-50' 
+                                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                    }`}
+                                  >
+                                    {isCompleted ? '✓ Review' : '▶ Start'}
+                                  </Button>
+                                </Link>
                               </div>
-                              <Link href={`/trainings/${training.id}`}>
-                                <Button variant={isCompleted ? 'outline' : 'default'} size="sm" className="bg-crej-primary hover:bg-crej-dark">
-                                  {isCompleted ? 'Review' : 'Start'}
-                                </Button>
-                              </Link>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   )}
 
-                  {/* FY26 Required Trainings */}
-                  {fy26Required.length > 0 && (
-                    <div>
-                      <h3 className="text-lg font-semibold text-black mb-3 pb-2 border-b border-crej-primary">
-                        More Required Courses (FY26)
-                      </h3>
-                      <div className="space-y-4">
-                        {fy26Required.map((training) => {
-                          const isCompleted = training.completions.length > 0;
-                          const completion = training.completions[0];
+                  {/* More Required Trainings (FY26) */}
+                  {moreRequired.length > 0 && (
+                    <div className="relative">
+                      <div className="p-4">
+                        <h3 className="text-xl font-bold text-blue-700 mb-4 flex items-center space-x-2">
+                          <span className="p-2 bg-blue-100 rounded-lg">📚</span>
+                          <span>More Required Courses (FY26)</span>
+                        </h3>
+                        <div className="space-y-4">
+                          {moreRequired.map((training) => {
+                            const isCompleted = training.completions.length > 0;
+                            const completion = training.completions[0];
 
-                          return (
-                            <div
-                              key={training.id}
-                              className={`flex items-center justify-between p-4 border rounded-lg transition-all ${
-                                isCompleted ? 'bg-green-50/50 border-green-200' : 'bg-white border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-2">
-                                  {training.videoUrl ? (
-                                    <PlayCircle className="h-5 w-5 text-crej-primary" />
-                                  ) : (
-                                    <FileText className="h-5 w-5 text-gray-600" />
+                            return (
+                              <div
+                                key={training.id}
+                                className={`flex items-center justify-between p-4 border rounded-lg transition-all ${
+                                  isCompleted ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200 hover:border-gray-300'
+                                }`}
+                              >
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-2">
+                                    {training.videoUrl ? (
+                                      <PlayCircle className="h-5 w-5 text-blue-600" />
+                                    ) : (
+                                      <FileText className="h-5 w-5 text-gray-600" />
+                                    )}
+                                    <h3 className="font-medium text-gray-900">{training.title}</h3>
+                                    {isCompleted && (
+                                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                                    )}
+                                  </div>
+                                  {training.description && (
+                                    <p className="text-sm text-gray-600 mt-1">{training.description}</p>
                                   )}
-                                  <h3 className="font-medium text-gray-900">{training.title}</h3>
-                                  {isCompleted && (
-                                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                                  {isCompleted && completion && (
+                                    <p className="text-xs text-green-600 mt-2">
+                                      Completed: {formatDate(completion.completedAt)}
+                                    </p>
                                   )}
                                 </div>
-                                {training.description && (
-                                  <p className="text-sm text-gray-600 mt-1">{training.description}</p>
-                                )}
-                                {isCompleted && completion && (
-                                  <p className="text-xs text-green-600 mt-2">
-                                    Completed: {formatDate(completion.completedAt)}
-                                  </p>
-                                )}
+                                <Link href={`/trainings/${training.id}`}>
+                                  <Button variant={isCompleted ? 'outline' : 'default'} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                                    {isCompleted ? 'Review' : 'Start'}
+                                  </Button>
+                                </Link>
                               </div>
-                              <Link href={`/trainings/${training.id}`}>
-                                <Button variant={isCompleted ? 'outline' : 'default'} size="sm" className="bg-crej-primary hover:bg-crej-dark">
-                                  {isCompleted ? 'Review' : 'Start'}
-                                </Button>
-                              </Link>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Annual/Alternate Year Required */}
-                  {annualRequired.length > 0 && (
-                    <div>
-                      <h3 className="text-lg font-semibold text-black mb-3 pb-2 border-b border-gray-300">
-                        Annual & Alternate Year Required Trainings
-                      </h3>
-                      <div className="space-y-4">
-                        {annualRequired.map((training) => {
-                          const isCompleted = training.completions.length > 0;
-                          const completion = training.completions[0];
-
-                          return (
-                            <div
-                              key={training.id}
-                              className={`flex items-center justify-between p-4 border rounded-lg transition-all ${
-                                isCompleted ? 'bg-green-50/50 border-green-200' : 'bg-white border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-2">
-                                  {training.videoUrl ? (
-                                    <PlayCircle className="h-5 w-5 text-crej-primary" />
-                                  ) : (
-                                    <FileText className="h-5 w-5 text-gray-600" />
-                                  )}
-                                  <h3 className="font-medium text-gray-900">{training.title}</h3>
-                                  {isCompleted && (
-                                    <CheckCircle2 className="h-5 w-5 text-green-600" />
-                                  )}
-                                </div>
-                                {training.description && (
-                                  <p className="text-sm text-gray-600 mt-1">{training.description}</p>
-                                )}
-                                {isCompleted && completion && (
-                                  <p className="text-xs text-green-600 mt-2">
-                                    Completed: {formatDate(completion.completedAt)}
-                                  </p>
-                                )}
-                              </div>
-                              <Link href={`/trainings/${training.id}`}>
-                                <Button variant={isCompleted ? 'outline' : 'default'} size="sm" className="bg-crej-primary hover:bg-crej-dark">
-                                  {isCompleted ? 'Review' : 'Start'}
-                                </Button>
-                              </Link>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Regular Required Trainings */}
-                  {regular.length > 0 && (
-                    <div>
-                      <h3 className="text-lg font-semibold text-black mb-3 pb-2 border-b border-gray-300">
-                        Required Trainings
-                      </h3>
-                      <div className="space-y-4">
-                        {regular.map((training) => {
-                          const isCompleted = training.completions.length > 0;
-                          const completion = training.completions[0];
-
-                          return (
-                            <div
-                              key={training.id}
-                              className={`flex items-center justify-between p-4 border rounded-lg transition-all ${
-                                isCompleted ? 'bg-green-50/50 border-green-200' : 'bg-white border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-2">
-                                  {training.videoUrl ? (
-                                    <PlayCircle className="h-5 w-5 text-crej-primary" />
-                                  ) : (
-                                    <FileText className="h-5 w-5 text-gray-600" />
-                                  )}
-                                  <h3 className="font-medium text-gray-900">{training.title}</h3>
-                                  {isCompleted && (
-                                    <CheckCircle2 className="h-5 w-5 text-green-600" />
-                                  )}
-                                </div>
-                                {training.description && (
-                                  <p className="text-sm text-gray-600 mt-1">{training.description}</p>
-                                )}
-                                {isCompleted && completion && (
-                                  <p className="text-xs text-green-600 mt-2">
-                                    Completed: {formatDate(completion.completedAt)}
-                                  </p>
-                                )}
-                              </div>
-                              <Link href={`/trainings/${training.id}`}>
-                                <Button variant={isCompleted ? 'outline' : 'default'} size="sm" className="bg-crej-primary hover:bg-crej-dark">
-                                  {isCompleted ? 'Review' : 'Start'}
-                                </Button>
-                              </Link>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -449,7 +371,7 @@ export default async function TrainingsPage() {
                       <h3 className="text-lg font-semibold text-black mb-3 pb-2 border-b border-gray-300">
                         Optional Trainings
                       </h3>
-                      <p className="text-sm text-gray-600 mb-4">
+                      <p className="text-sm text-gray-900 mb-4">
                         These trainings are optional but count toward your 30 hours of annual continuing education. All optional trainings can be found in the Utah Learning Portal.
                       </p>
                       <div className="space-y-4">
@@ -467,15 +389,15 @@ export default async function TrainingsPage() {
                               <div className="flex-1">
                                 <div className="flex items-center space-x-2">
                                   {training.videoUrl ? (
-                                    <PlayCircle className="h-5 w-5 text-gray-500" />
+                                    <PlayCircle className="h-5 w-5 text-gray-900" />
                                   ) : (
-                                    <FileText className="h-5 w-5 text-gray-500" />
+                                    <FileText className="h-5 w-5 text-gray-900" />
                                   )}
-                                  <h3 className="font-medium text-gray-700">{training.title}</h3>
+                                  <h3 className="font-medium text-gray-900">{training.title}</h3>
                                   {isCompleted && (
                                     <CheckCircle2 className="h-5 w-5 text-green-600" />
                                   )}
-                                  <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
+                                  <span className="text-xs px-2 py-1 bg-gray-100 text-gray-900 rounded">
                                     Optional
                                   </span>
                                 </div>
@@ -506,9 +428,15 @@ export default async function TrainingsPage() {
         })}
 
         {trainings.length === 0 && (
-          <Card>
+          <Card className="border border-gray-300 bg-white">
             <CardContent className="py-12 text-center">
-              <p className="text-gray-500">No trainings assigned to your role</p>
+              <div className="space-y-4">
+                <div className="text-6xl">📚</div>
+                <h3 className="text-xl font-semibold text-gray-900">No Trainings Available</h3>
+                <p className="text-gray-900 max-w-md mx-auto">
+                  There are currently no trainings assigned to your role. Please contact your administrator if you believe this is an error.
+                </p>
+              </div>
             </CardContent>
           </Card>
         )}

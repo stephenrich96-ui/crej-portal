@@ -25,17 +25,24 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
   const categoryFilter = searchParams.category as string | undefined;
   const searchQuery = searchParams.search;
 
+  // Admin can see ALL content, others see only their program content
+  const isAdmin = session.roles.includes('ADMIN');
+  
   // Build where clause based on access
   const accessiblePrograms: string[] = [];
-  if (canAccessProgram(session.roles, 'DSPD')) accessiblePrograms.push('DSPD');
-  if (canAccessProgram(session.roles, 'HRSS')) accessiblePrograms.push('HRSS');
-  if (canAccessProgram(session.roles, 'EPAS')) accessiblePrograms.push('EPAS');
+  if (isAdmin) {
+    accessiblePrograms.push('DSPD', 'HRSS', 'EPAS');
+  } else {
+    if (canAccessProgram(session.roles, 'DSPD')) accessiblePrograms.push('DSPD');
+    if (canAccessProgram(session.roles, 'HRSS')) accessiblePrograms.push('HRSS');
+    if (canAccessProgram(session.roles, 'EPAS')) accessiblePrograms.push('EPAS');
+  }
 
   if (accessiblePrograms.length === 0) {
     accessiblePrograms.push('DSPD'); // Default fallback
   }
 
-  const where: any = {
+  const where: any = isAdmin ? {} : {
     program: { in: accessiblePrograms },
   };
 
@@ -66,7 +73,7 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
   });
 
   const categories: string[] = ['ONBOARDING', 'SOPS', 'TRAININGS', 'COMPLIANCE_CHECKLISTS', 'REFERENCE'];
-  const programs: string[] = accessiblePrograms;
+  const programs: string[] = isAdmin ? ['DSPD', 'HRSS', 'EPAS'] : accessiblePrograms;
 
   return (
     <DashboardLayout user={session}>

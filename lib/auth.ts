@@ -73,6 +73,7 @@ export async function verifyMagicLinkToken(token: string): Promise<string | null
 
 /**
  * Get or create user
+ * Auto-assigns DSPD_SUPPORT_COORDINATOR role to all new users
  */
 export async function getOrCreateUser(email: string, name?: string): Promise<SessionUser> {
   let user = await prisma.user.findUnique({
@@ -87,12 +88,20 @@ export async function getOrCreateUser(email: string, name?: string): Promise<Ses
       },
     });
 
+    // Auto-assign DSPD_SUPPORT_COORDINATOR role to all new users
+    await prisma.userRole.create({
+      data: {
+        userId: user.id,
+        role: 'DSPD_SUPPORT_COORDINATOR',
+      },
+    });
+
     await createAuditLog({
       actorId: user.id,
       action: 'USER_CREATED',
       entityType: 'User',
       entityId: user.id,
-      metadata: JSON.stringify({ email }),
+      metadata: JSON.stringify({ email, autoAssignedRole: 'DSPD_SUPPORT_COORDINATOR' }),
     });
   }
 

@@ -1,0 +1,24 @@
+================================================================================
+🚨 UPLOAD FORMS HERE - READ THIS NOW 🚨
+================================================================================
+
+WHERE TO PUT THE PDF FORMS:
+/Users/stephenrichardson/crej-portal/public/forms/
+
+REQUIRED FILES:
+1. 0-2-USTEPS-Access-Form.pdf
+2. 0-8-UPI-Access-Form.pdf
+
+QUICKEST WAY (Mac):
+1. Open Finder
+2. Press Cmd+Shift+G
+3. Paste: /Users/stephenrichardson/crej-portal/public/forms
+4. Drag your PDF files there
+5. Make sure names match EXACTLY (case-sensitive!)
+
+THEN:
+- Restart dev server: npm run dev
+- Refresh browser: Cmd+Shift+R
+
+See public/forms/UPLOAD_INSTRUCTIONS.md for more details!
+================================================================================

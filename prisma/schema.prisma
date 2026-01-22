@@ -14,6 +14,7 @@ model User {
   id            String    @id @default(cuid())
   email         String    @unique
   name          String?
+  passwordHash  String?   // For password authentication
   emailVerified DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -31,7 +32,7 @@ model User {
 model UserRole {
   id        String   @id @default(cuid())
   userId    String
-  role      String   // ADMIN, DSPD_SUPPORT_COORDINATOR, DSPD_MANAGER, HRSS_STAFF, EPAS_STAFF, DSP, TRAINER
+  role      String   // ADMIN, DSPD_SUPPORT_COORDINATOR, DSPD_MANAGER, HRSS_STAFF, EPAS_STAFF, TRAINER
   createdAt DateTime @default(now())
 
   // Relations
@@ -217,4 +218,41 @@ model MagicLinkToken {
   @@index([token])
   @@index([email])
   @@index([expiresAt])
+}
+
+model CustomCodeBlock {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  code        String   // HTML/React code with branding already applied
+  pagePath    String?  // Optional: specific page to show on (e.g., "/trainings", "/start-here")
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+  position    String   @default("BOTTOM") // TOP, MIDDLE, BOTTOM
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+
+  @@index([pagePath])
+  @@index([isActive])
+  @@index([order])
+}
+
+model CustomForm {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  formFields  String   // JSON array of form field definitions
+  submitUrl   String?  // Where to submit the form
+  pagePath    String?  // Optional: specific page to show on
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+  position    String   @default("BOTTOM") // TOP, MIDDLE, BOTTOM
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+
+  @@index([pagePath])
+  @@index([isActive])
+  @@index([order])
 }

@@ -10,19 +10,21 @@ import TrainingCompletionButton from '@/components/training-completion-button';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { VideoEmbed } from '@/components/video-embed';
+import { TrainingLinkActions } from '@/components/training-link-actions';
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
 export default async function TrainingDetailPage({ params }: PageProps) {
-  const session = await getServerSession();
+  try {
+    const session = await getServerSession();
 
-  if (!session || !session.roles || session.roles.length === 0) {
-    redirect('/login');
-  }
+    if (!session || !session.roles || session.roles.length === 0) {
+      redirect('/login');
+    }
 
-  const { id } = await params;
+    const { id } = await params;
 
   const training = await prisma.training.findUnique({
     where: { id },
@@ -34,14 +36,14 @@ export default async function TrainingDetailPage({ params }: PageProps) {
     },
   });
 
-  if (!training) {
-    notFound();
-  }
+    if (!training) {
+      notFound();
+    }
 
-  const isCompleted = training.completions.length > 0;
-  const completion = training.completions[0];
+    const isCompleted = training.completions.length > 0;
+    const completion = training.completions[0];
 
-  return (
+    return (
     <DashboardLayout user={session}>
       <div className="max-w-4xl mx-auto space-y-6">
         <div>
@@ -80,27 +82,10 @@ export default async function TrainingDetailPage({ params }: PageProps) {
         {training.documentUrl && training.documentUrl.trim() !== '' && (
           <Card className="border border-gray-200 shadow-sm">
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-semibold text-black">Training Document</CardTitle>
+              <CardTitle className="text-lg font-semibold text-black">Training Link</CardTitle>
             </CardHeader>
             <CardContent>
-              <a
-                href={training.documentUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center space-x-2"
-              >
-                <Button
-                  variant="default"
-                  className="bg-crej-primary hover:bg-crej-dark"
-                >
-                  <FileText className="h-4 w-4" />
-                  <span>Open Training Document</span>
-                  <ExternalLink className="h-4 w-4" />
-                </Button>
-              </a>
-              <p className="text-xs text-gray-500 mt-2">
-                Document opens in a new tab
-              </p>
+              <TrainingLinkActions url={training.documentUrl} linkText="Open Training Link" />
             </CardContent>
           </Card>
         )}
@@ -140,5 +125,9 @@ export default async function TrainingDetailPage({ params }: PageProps) {
         </div>
       </div>
     </DashboardLayout>
-  );
+    );
+  } catch (error) {
+    console.error('Error loading training:', error);
+    redirect('/trainings');
+  }
 }

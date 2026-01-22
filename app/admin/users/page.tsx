@@ -5,8 +5,9 @@ import DashboardLayout from '@/components/layouts/dashboard-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, Plus, Edit } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2 } from 'lucide-react';
 import { isAdmin } from '@/lib/rbac';
+import DeleteUserButton from '@/components/admin/delete-user-button';
 
 export default async function AdminUsersPage() {
   const session = await getServerSession();
@@ -75,12 +76,21 @@ export default async function AdminUsersPage() {
                       )}
                     </div>
                   </div>
-                  <Link href={`/admin/users/${user.id}/edit`}>
-                    <Button variant="outline" size="sm">
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit Roles
-                    </Button>
-                  </Link>
+                  <div className="flex items-center space-x-2">
+                    <Link href={`/admin/users/${user.id}/edit`}>
+                      <Button variant="outline" size="sm">
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit Roles
+                      </Button>
+                    </Link>
+                    <DeleteUserButton 
+                      userId={user.id} 
+                      userEmail={user.email} 
+                      userName={user.name || user.email}
+                      currentUserId={session.id}
+                      isAdmin={user.roles.some(r => r.role === 'ADMIN')}
+                    />
+                  </div>
                 </div>
               ))}
             </div>

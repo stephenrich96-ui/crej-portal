@@ -10,7 +10,6 @@ import {
   CheckSquare, 
   PlayCircle, 
   Settings, 
-  LogOut,
   Menu,
   X,
   Shield,
@@ -29,34 +28,40 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/login');
-    router.refresh();
-  };
-
   const navItems = [
     { href: '/', label: 'Dashboard', icon: Home },
-    { href: '/start-here', label: 'Start Here', icon: PlayCircle },
-    { href: '/library', label: 'Library', icon: BookOpen },
     { href: '/trainings', label: 'Trainings', icon: PlayCircle },
-    { href: '/checklists', label: 'Checklists', icon: CheckSquare },
-    { href: '/forms', label: 'Forms', icon: FileText },
     ...(user.roles.includes('ADMIN') || user.roles.includes('TRAINER')
       ? [{ href: '/admin', label: 'Admin', icon: Shield }]
       : []),
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Mobile sidebar toggle */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-        <Link href="/" className="text-xl font-bold text-crej-primary">
-          CREJ Portal
+        <Link href="/" className="flex items-center space-x-2">
+          <img 
+            src="/logo.png" 
+            alt="CREJ" 
+            className="h-8 w-auto"
+            onError={(e) => {
+              e.preventDefault();
+              const target = e.currentTarget;
+              target.style.display = 'none';
+              const fallback = target.nextElementSibling as HTMLElement;
+              if (fallback) fallback.style.display = 'flex';
+            }}
+            style={{ display: 'none' }}
+          />
+          <div className="h-8 w-8 rounded-lg bg-crej-primary flex items-center justify-center">
+            <span className="text-white font-bold text-lg">C</span>
+          </div>
+          <span className="text-xl font-semibold text-gray-900 tracking-tight">CREJ Portal</span>
         </Link>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2 rounded-md text-gray-600 hover:bg-gray-100"
+          className="p-2 rounded-md text-gray-900 hover:bg-gray-100"
         >
           {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
@@ -66,16 +71,32 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
         {/* Sidebar */}
         <aside
           className={cn(
-            'fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 transform transition-transform duration-200 ease-in-out lg:translate-x-0',
+            'fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 transform transition-transform duration-200 ease-in-out lg:translate-x-0 shadow-sm',
             sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
           )}
         >
           <div className="h-full flex flex-col">
             <div className="p-6 border-b border-gray-200">
-              <Link href="/" className="text-xl font-bold text-crej-primary">
-                CREJ Portal
+              <Link href="/" className="flex items-center space-x-3">
+                <img 
+                  src="/logo.png" 
+                  alt="CREJ" 
+                  className="h-10 w-auto"
+                  onError={(e) => {
+                    e.preventDefault();
+                    const target = e.currentTarget;
+                    target.style.display = 'none';
+                    const fallback = target.nextElementSibling as HTMLElement;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                  style={{ display: 'none' }}
+                />
+                <div className="h-10 w-10 rounded-xl bg-gray-900 flex items-center justify-center shadow-sm">
+                  <span className="text-white font-bold text-lg">C</span>
+                </div>
+                <span className="text-xl font-semibold text-gray-900 tracking-tight">CREJ Portal</span>
               </Link>
-              <p className="text-xs text-gray-500 mt-1">{user.email}</p>
+              <p className="text-xs text-gray-600 mt-2">{user.email}</p>
             </div>
 
             <nav className="flex-1 p-4 space-y-1">
@@ -88,10 +109,10 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
                     href={item.href}
                     onClick={() => setSidebarOpen(false)}
                     className={cn(
-                      'flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                      'flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300',
                       isActive
-                        ? 'bg-crej-light text-crej-primary'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? 'bg-white text-gray-900 border border-gray-300'
+                        : 'text-gray-900 hover:bg-gray-50'
                     )}
                   >
                     <Icon className="h-5 w-5" />
@@ -100,17 +121,6 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
                 );
               })}
             </nav>
-
-            <div className="p-4 border-t border-gray-200">
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={handleLogout}
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
-              </Button>
-            </div>
           </div>
         </aside>
 

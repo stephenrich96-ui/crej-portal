@@ -13,7 +13,6 @@ const ROLES: { value: string; label: string; description: string }[] = [
   { value: 'DSPD_MANAGER', label: 'DSPD Manager', description: 'Manage DSPD operations and staff' },
   { value: 'HRSS_STAFF', label: 'HRSS Staff', description: 'Housing Related Support Services' },
   { value: 'EPAS_STAFF', label: 'EPAS Staff', description: 'EPAS program services' },
-  { value: 'DSP', label: 'Direct Support Professional', description: 'Direct support services' },
   { value: 'TRAINER', label: 'Trainer', description: 'Training and content management' },
 ];
 

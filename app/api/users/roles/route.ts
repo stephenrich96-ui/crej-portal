@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession, createSession, deleteSession } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit';
+import { sendAdminEmailNotification, sendAdminSMSNotification } from '@/lib/notifications';
 import { cookies } from 'next/headers';
 
 export async function PUT(request: NextRequest) {
@@ -25,12 +26,18 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'At least one role is required' }, { status: 400 });
     }
 
-    const validRoles = ['ADMIN', 'DSPD_SUPPORT_COORDINATOR', 'DSPD_MANAGER', 'HRSS_STAFF', 'EPAS_STAFF', 'DSP', 'TRAINER'];
+    const validRoles = ['ADMIN', 'DSPD_SUPPORT_COORDINATOR', 'DSPD_MANAGER', 'HRSS_STAFF', 'EPAS_STAFF', 'TRAINER'];
     for (const role of roles) {
       if (!validRoles.includes(role)) {
         return NextResponse.json({ error: `Invalid role: ${role}` }, { status: 400 });
       }
     }
+
+    // Check if this is a first-time role selection (before deleting existing roles)
+    const existingRoles = await prisma.userRole.findMany({
+      where: { userId: user.id },
+    });
+    const isFirstTimeSelection = existingRoles.length === 0;
 
     // Delete existing roles
     await prisma.userRole.deleteMany({
@@ -52,6 +59,27 @@ export async function PUT(request: NextRequest) {
       entityId: user.id,
       metadata: JSON.stringify({ roles }),
     });
+
+    // Send notifications to admins about new role selection (only for first-time selections)
+    if (isFirstTimeSelection) {
+      try {
+        await Promise.all([
+          sendAdminEmailNotification({
+            userEmail: user.email,
+            userName: user.name || user.email,
+            roles,
+          }),
+          sendAdminSMSNotification({
+            userEmail: user.email,
+            userName: user.name || user.email,
+            roles,
+          }),
+        ]);
+      } catch (error) {
+        console.error('Error sending admin notifications:', error);
+        // Don't fail the request if notifications fail
+      }
+    }
 
     // Update the session with new roles
     const updatedUser = await prisma.user.findUnique({

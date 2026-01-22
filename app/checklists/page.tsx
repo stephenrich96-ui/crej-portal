@@ -16,14 +16,21 @@ export default async function ChecklistsPage() {
     redirect('/login');
   }
 
+  // Admin can see ALL checklists, others see only their program checklists
+  const isAdmin = session.roles.includes('ADMIN');
+  
   // Get accessible programs
   const accessiblePrograms: string[] = [];
-  if (canAccessProgram(session.roles, 'DSPD')) accessiblePrograms.push('DSPD');
-  if (canAccessProgram(session.roles, 'HRSS')) accessiblePrograms.push('HRSS');
-  if (canAccessProgram(session.roles, 'EPAS')) accessiblePrograms.push('EPAS');
+  if (isAdmin) {
+    accessiblePrograms.push('DSPD', 'HRSS', 'EPAS');
+  } else {
+    if (canAccessProgram(session.roles, 'DSPD')) accessiblePrograms.push('DSPD');
+    if (canAccessProgram(session.roles, 'HRSS')) accessiblePrograms.push('HRSS');
+    if (canAccessProgram(session.roles, 'EPAS')) accessiblePrograms.push('EPAS');
+  }
 
   const checklists = await prisma.checklist.findMany({
-    where: {
+    where: isAdmin ? {} : {
       program: { in: accessiblePrograms },
     },
     include: {
@@ -54,7 +61,9 @@ export default async function ChecklistsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-semibold text-black tracking-tight">Checklists</h1>
-            <p className="mt-2 text-gray-600">Workflow checklists for your programs</p>
+            <p className="mt-2 text-gray-600">
+              {isAdmin ? 'All checklists (Admin view)' : 'Workflow checklists for your programs'}
+            </p>
           </div>
         </div>
 

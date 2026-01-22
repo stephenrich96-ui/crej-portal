@@ -1,25 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth';
-import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
+import { getServerSession } from '@/lib/get-session';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const sessionId = cookieStore.get('session')?.value;
-
-    if (!sessionId) {
+    const session = await getServerSession();
+    
+    if (!session) {
       return NextResponse.json({ user: null });
     }
 
-    const user = getSession(sessionId);
-
-    if (!user) {
-      return NextResponse.json({ user: null });
-    }
-
-    return NextResponse.json({ user });
+    return NextResponse.json({ user: session });
   } catch (error) {
-    console.error('Error getting session:', error);
-    return NextResponse.json({ user: null });
+    return NextResponse.json({ user: null }, { status: 500 });
   }
 }

@@ -74,24 +74,24 @@ export default async function DashboardPage() {
     <DashboardLayout user={session}>
       <div className="space-y-6">
         <div className="mb-8">
-          <h1 className="text-3xl font-semibold text-black tracking-tight">Dashboard</h1>
-          <p className="mt-2 text-base text-black">
+          <h1 className="text-3xl font-semibold text-gray-900 tracking-tight">Dashboard</h1>
+          <p className="mt-2 text-base text-gray-900">
             Welcome back, {session.name || session.email}
           </p>
-          <p className="text-sm text-black mt-1">Roles: {roleLabels}</p>
+          <p className="text-sm text-gray-900 mt-1">Roles: {roleLabels}</p>
         </div>
 
         {/* Required Trainings */}
         <Card className="border border-gray-200 shadow-sm">
           <CardHeader className="pb-4">
-            <CardTitle className="text-xl font-semibold text-black">Required Trainings</CardTitle>
-            <CardDescription className="text-sm text-gray-600">
+            <CardTitle className="text-xl font-semibold text-gray-900">Required Trainings</CardTitle>
+            <CardDescription className="text-sm text-gray-900">
               {requiredTrainings.length} training{requiredTrainings.length !== 1 ? 's' : ''} assigned to you
             </CardDescription>
           </CardHeader>
           <CardContent>
             {requiredTrainings.length === 0 ? (
-              <p className="text-gray-500">No required trainings</p>
+              <p className="text-gray-900">No required trainings</p>
             ) : (
               <div className="space-y-3">
                 {requiredTrainings.map((training) => {
@@ -106,7 +106,7 @@ export default async function DashboardPage() {
                       <div>
                         <p className="font-medium">{training.title}</p>
                         {training.description && (
-                          <p className="text-sm text-gray-600">{training.description}</p>
+                          <p className="text-sm text-gray-900">{training.description}</p>
                         )}
                         {isCompleted && training.completions[0] && (
                           <p className="text-xs text-green-600 mt-1">
@@ -130,15 +130,15 @@ export default async function DashboardPage() {
         {/* Checklists */}
         <Card className="border border-gray-200 shadow-sm">
           <CardHeader className="pb-4">
-            <CardTitle className="text-xl font-semibold text-black">My Checklists</CardTitle>
-            <CardDescription className="text-sm text-gray-600">
+            <CardTitle className="text-xl font-semibold text-gray-900">My Checklists</CardTitle>
+            <CardDescription className="text-sm text-gray-900">
               Active checklist instances
             </CardDescription>
           </CardHeader>
           <CardContent>
             {checklistInstances.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-gray-500 mb-4">No active checklists</p>
+                <p className="text-gray-900 mb-4">No active checklists</p>
                 <Link href="/checklists">
                   <Button>View All Checklists</Button>
                 </Link>
@@ -155,15 +155,15 @@ export default async function DashboardPage() {
                       <div className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
                         <div className="flex items-center justify-between mb-2">
                           <p className="font-medium">{instance.checklist.title}</p>
-                          <span className="text-sm text-gray-500">{instance.label}</span>
+                          <span className="text-sm text-gray-900">{instance.label}</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
                           <div
-                            className="bg-crej-primary h-2 rounded-full transition-all"
+                            className="bg-blue-600 h-2 rounded-full transition-all"
                             style={{ width: `${progress}%` }}
                           />
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-gray-900 mt-1">
                           {completedItems} of {totalItems} items completed
                         </p>
                       </div>
@@ -181,14 +181,14 @@ export default async function DashboardPage() {
         {/* Recently Viewed */}
         <Card className="border border-gray-200 shadow-sm">
           <CardHeader className="pb-4">
-            <CardTitle className="text-xl font-semibold text-black">Recent Content</CardTitle>
-            <CardDescription className="text-sm text-gray-600">
+            <CardTitle className="text-xl font-semibold text-gray-900">Recent Content</CardTitle>
+            <CardDescription className="text-sm text-gray-900">
               Recently updated content in your programs
             </CardDescription>
           </CardHeader>
           <CardContent>
             {recentContent.length === 0 ? (
-              <p className="text-gray-500">No recent content</p>
+              <p className="text-gray-900">No recent content</p>
             ) : (
               <div className="space-y-3">
                 {recentContent.map((content) => (
@@ -196,13 +196,13 @@ export default async function DashboardPage() {
                     <div className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
                       <p className="font-medium">{content.title}</p>
                       {content.summary && (
-                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">{content.summary}</p>
+                        <p className="text-sm text-gray-900 mt-1 line-clamp-2">{content.summary}</p>
                       )}
                       <div className="flex items-center space-x-2 mt-2">
-                        <span className="text-xs px-2 py-1 bg-crej-light text-crej-primary rounded">
+                        <span className="text-xs px-2 py-1 bg-gray-100 text-gray-900 rounded">
                           {content.program}
                         </span>
-                        <span className="text-xs px-2 py-1 bg-gray-100 text-gray-800 rounded">
+                        <span className="text-xs px-2 py-1 bg-gray-100 text-gray-900 rounded">
                           {content.category.replace(/_/g, ' ')}
                         </span>
                       </div>

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/get-session';
 import { prisma } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit';
-import { cookies } from 'next/headers';
 
 export async function POST(
   request: NextRequest,
@@ -10,13 +9,13 @@ export async function POST(
 ) {
   try {
     const session = await getServerSession();
-
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { id } = await params;
 
+    // Check if training exists
     const training = await prisma.training.findUnique({
       where: { id },
     });
@@ -26,37 +25,48 @@ export async function POST(
     }
 
     // Check if already completed
-    const existing = await prisma.trainingCompletion.findUnique({
+    const existing = await prisma.trainingCompletion.findFirst({
       where: {
-        userId_trainingId: {
-          userId: session.id,
-          trainingId: training.id,
-        },
+        trainingId: id,
+        userId: session.id,
       },
     });
 
+    let completion;
     if (existing) {
-      return NextResponse.json({ message: 'Already completed' });
+      // Already completed - return existing
+      completion = existing;
+    } else {
+      // Create new completion
+      completion = await prisma.trainingCompletion.create({
+        data: {
+          trainingId: id,
+          userId: session.id,
+          completedAt: new Date(),
+        },
+      });
+
+      // Create audit log (don't fail if this fails)
+      try {
+        await createAuditLog({
+          actorId: session.id,
+          action: 'TRAINING_COMPLETED',
+          entityType: 'Training',
+          entityId: id,
+          metadata: { trainingTitle: training.title },
+        });
+      } catch (auditError) {
+        console.error('Failed to create audit log:', auditError);
+        // Continue even if audit logging fails
+      }
     }
 
-    await prisma.trainingCompletion.create({
-      data: {
-        userId: session.id,
-        trainingId: id,
-      },
-    });
-
-    await createAuditLog({
-      actorId: session.id,
-      action: 'TRAINING_COMPLETED',
-      entityType: 'Training',
-      entityId: id,
-      metadata: JSON.stringify({ trainingTitle: training.title }),
-    });
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
+    return NextResponse.json(completion);
+  } catch (error: any) {
     console.error('Error completing training:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    }, { status: 500 });
   }
 }

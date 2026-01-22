@@ -26,17 +26,23 @@ export default function TrainingCheckbox({ trainingId, isCompleted, completionDa
     try {
       const response = await fetch(`/api/trainings/${trainingId}/complete`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
+
+      const data = await response.json().catch(() => ({}));
 
       if (response.ok) {
         setCompleted(true);
         router.refresh();
       } else {
-        alert('Failed to mark training as complete. Please try again.');
+        console.error('Failed to mark training as complete:', data);
+        alert(`Failed to mark training as complete: ${data.error || 'Please try again.'}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error:', error);
-      alert('An error occurred. Please try again.');
+      alert(`An error occurred: ${error.message || 'Please try again.'}`);
     } finally {
       setLoading(false);
     }
