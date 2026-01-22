@@ -15,14 +15,25 @@ export default async function TrainingsPage() {
     redirect('/login');
   }
 
-  // Only show trainings that have explicit requirements matching user's roles
+  // Show trainings that either:
+  // 1. Have requirements matching user's roles, OR
+  // 2. Have no requirements (optional trainings)
   const trainings = await prisma.training.findMany({
     where: {
-      requirements: {
-        some: {
-          role: { in: session.roles },
+      OR: [
+        {
+          requirements: {
+            some: {
+              role: { in: session.roles },
+            },
+          },
         },
-      },
+        {
+          requirements: {
+            none: {},
+          },
+        },
+      ],
     },
     include: {
       completions: {
