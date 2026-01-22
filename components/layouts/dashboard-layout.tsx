@@ -13,7 +13,8 @@ import {
   LogOut,
   Menu,
   X,
-  Shield
+  Shield,
+  FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SessionUser } from '@/lib/auth';
@@ -39,6 +40,7 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
     { href: '/library', label: 'Library', icon: BookOpen },
     { href: '/trainings', label: 'Trainings', icon: PlayCircle },
     { href: '/checklists', label: 'Checklists', icon: CheckSquare },
+    { href: '/forms', label: 'Forms', icon: FileText },
     ...(user.roles.includes('ADMIN') || user.roles.includes('TRAINER')
       ? [{ href: '/admin', label: 'Admin', icon: Shield }]
       : []),
