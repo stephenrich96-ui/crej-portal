@@ -15,7 +15,8 @@
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "prisma:seed": "tsx prisma/seed.ts",
-    "content:sync": "tsx scripts/sync-content.ts"
+    "content:sync": "tsx scripts/sync-content.ts",
+    "trainings:create-dspd": "tsx scripts/create-dspd-trainings.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.0.0",
