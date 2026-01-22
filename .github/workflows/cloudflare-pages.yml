@@ -22,6 +22,9 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
       
+      - name: Install devDependencies (required for build)
+        run: npm install --legacy-peer-deps
+      
       - name: Build for Cloudflare Pages
         run: npm run pages:build
         env:
