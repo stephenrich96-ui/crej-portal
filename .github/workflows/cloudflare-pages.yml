@@ -28,6 +28,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           ALLOWED_EMAIL_DOMAIN: ${{ secrets.ALLOWED_EMAIL_DOMAIN }}
           NODE_ENV: production
+          npm_config_legacy_peer_deps: "true"
       
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
