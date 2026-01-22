@@ -1,26 +1,158 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --foreground: #000000;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #ffffff;
+    --foreground: #000000;
   }
 }
 
 body {
+  color: #000000 !important;
   background: var(--background);
-  color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Force all text elements to be black */
+p, span, div, h1, h2, h3, h4, h5, h6, label, li, td, th, small, strong, em, b, i {
+  color: #000000 !important;
+}
+
+/* Override gray text classes */
+.text-gray-500,
+.text-gray-600,
+.text-gray-700,
+.text-gray-400,
+.text-gray-300,
+.text-gray-800,
+.text-gray-900 {
+  color: #000000 !important;
+}
+
+/* Keep links using CREJ branding */
+a[href] {
+  color: #1e40af !important;
+}
+
+a[href]:hover {
+  color: #1e293b !important;
+}
+
+/* Keep button text as defined (white on colored buttons) */
+button.text-white,
+button[class*="text-white"] {
+  color: #ffffff !important;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Prose styles for markdown - Premium styling */
+.prose {
+  @apply text-black;
+  color: #000000 !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  line-height: 1.7;
+}
+
+.prose h1 {
+  @apply text-3xl font-semibold mt-10 mb-6 text-black;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.prose h2 {
+  @apply text-2xl font-semibold mt-8 mb-4 text-black;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.prose h3 {
+  @apply text-xl font-medium mt-6 mb-3 text-black;
+  font-weight: 500;
+}
+
+.prose h4 {
+  @apply text-lg font-medium mt-4 mb-2 text-black;
+  font-weight: 500;
+}
+
+.prose p {
+  @apply mb-5 leading-relaxed text-black;
+  font-size: 15px;
+}
+
+.prose ul,
+.prose ol {
+  @apply mb-5 pl-6;
+}
+
+.prose li {
+  @apply mb-2 text-black;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.prose a {
+  color: #1e40af !important;
+  text-decoration: none;
+  border-bottom: 1px solid #bfdbfe;
+  transition: all 0.2s;
+}
+
+.prose a:hover {
+  color: #1e293b !important;
+  border-bottom-color: #1e40af;
+}
+
+.prose code {
+  @apply bg-gray-50 px-1.5 py-0.5 rounded text-sm font-mono text-black;
+  border: 1px solid #e5e7eb;
+}
+
+.prose pre {
+  @apply bg-gray-50 p-4 rounded-lg overflow-x-auto mb-5 border border-gray-200;
+}
+
+.prose pre code {
+  @apply bg-transparent p-0 border-0;
+}
+
+.prose blockquote {
+  border-left: 4px solid #d1d5db;
+  padding-left: 1.25rem;
+  margin: 1.25rem 0;
+  font-style: italic;
+  color: #374151;
+}
+
+.prose table {
+  @apply w-full border-collapse mb-5;
+}
+
+.prose th,
+.prose td {
+  @apply border border-gray-200 px-4 py-3 text-left;
+}
+
+.prose th {
+  @apply bg-gray-50 font-semibold text-black;
+}
+
+.prose strong {
+  @apply font-semibold text-black;
+}
+
+.prose em {
+  @apply italic text-black;
 }
