@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+// import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -60,19 +60,17 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <Alert variant="destructive">
-                <AlertDescription>
-                  {error === 'invalid_token' && 'Invalid or expired link'}
-                  {error === 'verification_failed' && 'Verification failed. Please try again.'}
-                  {!['invalid_token', 'verification_failed'].includes(error) && 'Login error'}
-                </AlertDescription>
-              </Alert>
+              <div className="p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm">
+                {error === 'invalid_token' && 'Invalid or expired link'}
+                {error === 'verification_failed' && 'Verification failed. Please try again.'}
+                {!['invalid_token', 'verification_failed'].includes(error) && 'Login error'}
+              </div>
             )}
 
             {message && (
-              <Alert variant={magicLink ? 'success' : 'default'}>
-                <AlertDescription>{message}</AlertDescription>
-              </Alert>
+              <div className={`p-3 border rounded text-sm ${magicLink ? 'bg-green-50 border-green-200 text-green-800' : 'bg-blue-50 border-blue-200 text-blue-800'}`}>
+                {message}
+              </div>
             )}
 
             {magicLink && (
