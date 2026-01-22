@@ -37,6 +37,7 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
 
   const navItems = [
     { href: '/', label: 'Dashboard', icon: Home },
+    { href: '/start-here', label: 'Start Here', icon: PlayCircle },
     { href: '/library', label: 'Library', icon: BookOpen },
     { href: '/trainings', label: 'Trainings', icon: PlayCircle },
     { href: '/checklists', label: 'Checklists', icon: CheckSquare },
