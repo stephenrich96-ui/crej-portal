@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 :root {
   --background: #ffffff;
@@ -29,130 +27,141 @@ p, span, div, h1, h2, h3, h4, h5, h6, label, li, td, th, small, strong, em, b, i
 .text-gray-500,
 .text-gray-600,
 .text-gray-700,
-.text-gray-400,
-.text-gray-300,
 .text-gray-800,
 .text-gray-900 {
   color: #000000 !important;
 }
 
-/* Keep links using CREJ branding */
-a[href] {
-  color: #1e40af !important;
+/* Preserve link colors */
+a {
+  color: #1e40af;
 }
 
-a[href]:hover {
-  color: #1e293b !important;
+a:hover {
+  color: #1e293b;
 }
 
-/* Keep button text as defined (white on colored buttons) */
-button.text-white,
-button[class*="text-white"] {
-  color: #ffffff !important;
+/* Preserve button text colors */
+button {
+  color: inherit;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-}
-
-/* Prose styles for markdown - Premium styling */
+/* Prose styles for markdown content */
 .prose {
-  @apply text-black;
-  color: #000000 !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-  line-height: 1.7;
+  color: #000000;
+  max-width: none;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  color: #000000;
+  font-weight: 600;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
 }
 
 .prose h1 {
-  @apply text-3xl font-semibold mt-10 mb-6 text-black;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-size: 2em;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.3em;
 }
 
 .prose h2 {
-  @apply text-2xl font-semibold mt-8 mb-4 text-black;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-.prose h3 {
-  @apply text-xl font-medium mt-6 mb-3 text-black;
-  font-weight: 500;
-}
-
-.prose h4 {
-  @apply text-lg font-medium mt-4 mb-2 text-black;
-  font-weight: 500;
+  font-size: 1.5em;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.3em;
 }
 
 .prose p {
-  @apply mb-5 leading-relaxed text-black;
-  font-size: 15px;
+  margin-bottom: 1em;
+  line-height: 1.7;
+  color: #000000;
 }
 
 .prose ul,
 .prose ol {
-  @apply mb-5 pl-6;
+  margin-bottom: 1em;
+  padding-left: 2em;
 }
 
 .prose li {
-  @apply mb-2 text-black;
-  font-size: 15px;
-  line-height: 1.7;
+  margin-bottom: 0.5em;
+  color: #000000;
 }
 
 .prose a {
-  color: #1e40af !important;
-  text-decoration: none;
-  border-bottom: 1px solid #bfdbfe;
-  transition: all 0.2s;
+  color: #1e40af;
+  text-decoration: underline;
 }
 
 .prose a:hover {
-  color: #1e293b !important;
-  border-bottom-color: #1e40af;
+  color: #1e293b;
 }
 
 .prose code {
-  @apply bg-gray-50 px-1.5 py-0.5 rounded text-sm font-mono text-black;
-  border: 1px solid #e5e7eb;
+  background-color: #f3f4f6;
+  padding: 0.2em 0.4em;
+  border-radius: 0.25rem;
+  font-size: 0.9em;
+  color: #000000;
 }
 
 .prose pre {
-  @apply bg-gray-50 p-4 rounded-lg overflow-x-auto mb-5 border border-gray-200;
+  background-color: #f3f4f6;
+  padding: 1em;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin-bottom: 1em;
 }
 
 .prose pre code {
-  @apply bg-transparent p-0 border-0;
+  background-color: transparent;
+  padding: 0;
 }
 
 .prose blockquote {
   border-left: 4px solid #d1d5db;
-  padding-left: 1.25rem;
-  margin: 1.25rem 0;
+  padding-left: 1em;
+  margin-left: 0;
+  color: #6b7280;
   font-style: italic;
-  color: #374151;
+}
+
+.prose blockquote p {
+  color: #6b7280;
 }
 
 .prose table {
-  @apply w-full border-collapse mb-5;
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1em;
 }
 
 .prose th,
 .prose td {
-  @apply border border-gray-200 px-4 py-3 text-left;
+  border: 1px solid #e5e7eb;
+  padding: 0.5em;
+  text-align: left;
+  color: #000000;
 }
 
 .prose th {
-  @apply bg-gray-50 font-semibold text-black;
+  background-color: #f9fafb;
+  font-weight: 600;
 }
 
-.prose strong {
-  @apply font-semibold text-black;
+.prose img {
+  max-width: 100%;
+  height: auto;
+  margin: 1em 0;
 }
 
-.prose em {
-  @apply italic text-black;
+.prose hr {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 2em 0;
 }
