@@ -7,6 +7,17 @@ const prisma = new PrismaClient();
 
 const requiredTrainings = [
   {
+    title: 'DSPD Support Coordinator Start Here',
+    description: 'Complete onboarding guide for new DSPD Support Coordinators. Walk through all required steps, forms, and initial trainings in order.',
+    program: 'DSPD',
+    duration: 'Guide (follow step-by-step)',
+    frequency: 'Once (for new coordinators)',
+    videoUrl: '',
+    documentUrl: '',
+    requiredRoles: ['DSPD_SUPPORT_COORDINATOR', 'DSPD_MANAGER'],
+    order: 0, // First training
+  },
+  {
     title: 'DSPD SCE: Acquiring and maintaining integrated community-based housing',
     description: 'Introduces the benefits of integrated, home and community-based housing and provides practical guidance on supporting clients in acquiring and maintaining safe, stable housing within the community.',
     program: 'DSPD',
@@ -75,6 +86,7 @@ const requiredTrainings = [
     videoUrl: 'https://seln.org/training/supporting-a-vision-for-employment',
     documentUrl: 'https://seln.org/training/supporting-a-vision-for-employment',
     requiredRoles: ['DSPD_SUPPORT_COORDINATOR', 'DSPD_MANAGER'],
+    order: 7, // High priority due to deadline
   },
   {
     title: 'DSPD SCE: Level of care and Medicaid eligibility',
@@ -185,27 +197,40 @@ const requiredTrainings = [
     videoUrl: '', // Assigned through ULP
     documentUrl: 'https://utahlearningportal.com',
     requiredRoles: ['DSPD_SUPPORT_COORDINATOR', 'DSPD_MANAGER'],
+    order: 2, // High priority due to short deadline
   },
 ];
 
 async function main() {
   console.log('Creating DSPD Support Coordinator required trainings...\n');
 
-  // Find or create the training guide content item
-  const guideContent = await prisma.contentItem.findFirst({
+  // Find or create the "Start Here" content item
+  let startHereContent = await prisma.contentItem.findFirst({
     where: {
-      title: 'DSPD Support Coordinator Training Tracking Guide',
+      title: 'DSPD Support Coordinator Start Here',
       program: 'DSPD',
     },
   });
 
-  if (!guideContent) {
-    console.log('Training guide content not found. Please run content sync first.');
-    console.log('Or create the content item manually in the admin panel.');
+  if (!startHereContent) {
+    console.log('Creating "Start Here" content item...');
+    const slug = 'dspd-support-coordinator-start-here';
+    startHereContent = await prisma.contentItem.create({
+      data: {
+        title: 'DSPD Support Coordinator Start Here',
+        slug,
+        summary: 'Complete onboarding guide for new DSPD Support Coordinators. Walk through all required steps, forms, and initial trainings in order.',
+        content: '# DSPD Support Coordinator Start Here\n\nSee the full guide in the Library section.',
+        category: 'TRAININGS',
+        program: 'DSPD',
+        isFromFile: false,
+      },
+    });
+    console.log('  ✓ Created "Start Here" content item');
   }
 
   for (const trainingData of requiredTrainings) {
-    const { requiredRoles, ...trainingInfo } = trainingData;
+    const { requiredRoles, order, ...trainingInfo } = trainingData;
 
     // Check if training already exists
     const existing = await prisma.training.findFirst({
@@ -220,6 +245,12 @@ async function main() {
       continue;
     }
 
+    // Link "Start Here" training to content item
+    let contentItemId = null;
+    if (trainingInfo.title.includes('Start Here')) {
+      contentItemId = startHereContent.id;
+    }
+
     // Create training
     const training = await prisma.training.create({
       data: {
@@ -228,7 +259,8 @@ async function main() {
         program: trainingInfo.program,
         videoUrl: trainingInfo.videoUrl || null,
         documentUrl: trainingInfo.documentUrl || null,
-        order: 0,
+        contentItemId: contentItemId,
+        order: order !== undefined ? order : 100, // Default to end if no order specified
       },
     });
 
