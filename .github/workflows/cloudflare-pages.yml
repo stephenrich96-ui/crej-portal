@@ -22,9 +22,6 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
       
-      - name: Install TypeScript (required for next.config.ts)
-        run: npm install typescript --save-dev --legacy-peer-deps
-      
       - name: Build for Cloudflare Pages
         run: npm run pages:build
         env:
