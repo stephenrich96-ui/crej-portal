@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { CheckCircle2, Circle, ExternalLink, Mail, Calendar, AlertCircle, FileText } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import TrainingCheckbox from '@/components/training-checkbox';
 
 export default async function StartHerePage() {
   const session = await getServerSession();
@@ -197,11 +198,11 @@ export default async function StartHerePage() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-2">
-                            {isCompleted ? (
-                              <CheckCircle2 className="h-5 w-5 text-green-600" />
-                            ) : (
-                              <Circle className="h-5 w-5 text-red-600" />
-                            )}
+                            <TrainingCheckbox 
+                              trainingId={training.id}
+                              isCompleted={isCompleted}
+                              completionDate={completion?.completedAt}
+                            />
                             <h3 className="font-semibold text-black">{training.title}</h3>
                             <span className="text-xs px-2 py-1 bg-red-100 text-red-800 rounded font-medium">
                               DEADLINE
@@ -299,11 +300,11 @@ export default async function StartHerePage() {
                     >
                       <div className="flex-1">
                         <div className="flex items-center space-x-2">
-                          {isCompleted ? (
-                            <CheckCircle2 className="h-5 w-5 text-green-600" />
-                          ) : (
-                            <Circle className="h-5 w-5 text-gray-400" />
-                          )}
+                          <TrainingCheckbox 
+                            trainingId={training.id}
+                            isCompleted={isCompleted}
+                            completionDate={completion?.completedAt}
+                          />
                           <h3 className="font-medium text-black">{training.title}</h3>
                         </div>
                         {training.description && (
@@ -375,11 +376,11 @@ export default async function StartHerePage() {
                     >
                       <div className="flex-1">
                         <div className="flex items-center space-x-2">
-                          {isCompleted ? (
-                            <CheckCircle2 className="h-5 w-5 text-green-600" />
-                          ) : (
-                            <Circle className="h-5 w-5 text-gray-400" />
-                          )}
+                          <TrainingCheckbox 
+                            trainingId={training.id}
+                            isCompleted={isCompleted}
+                            completionDate={completion?.completedAt}
+                          />
                           <h3 className="font-medium text-black">{training.title}</h3>
                         </div>
                         {training.description && (
@@ -450,11 +451,11 @@ export default async function StartHerePage() {
                     >
                       <div className="flex-1">
                         <div className="flex items-center space-x-2">
-                          {isCompleted ? (
-                            <CheckCircle2 className="h-5 w-5 text-green-600" />
-                          ) : (
-                            <Circle className="h-5 w-5 text-gray-400" />
-                          )}
+                          <TrainingCheckbox 
+                            trainingId={training.id}
+                            isCompleted={isCompleted}
+                            completionDate={completion?.completedAt}
+                          />
                           <h3 className="font-medium text-black">{training.title}</h3>
                         </div>
                         {training.description && (

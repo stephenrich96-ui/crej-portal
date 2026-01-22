@@ -23,33 +23,38 @@ export async function GET(request: NextRequest) {
     const user = await getOrCreateUser(email);
     const sessionId = createSession(user);
 
-    await createAuditLog({
-      actorId: user.id,
-      action: 'LOGIN',
-      entityType: 'User',
-      entityId: user.id,
-      metadata: JSON.stringify({ email }),
-    });
+    try {
+      await createAuditLog({
+        actorId: user.id,
+        action: 'LOGIN',
+        entityType: 'User',
+        entityId: user.id,
+        metadata: JSON.stringify({ email }),
+      });
+    } catch (auditError) {
+      // Don't fail login if audit log fails
+      console.error('Audit log error (non-fatal):', auditError);
+    }
 
     // Set session cookie
     const cookieStore = await cookies();
-    cookieStore.set('session', sessionId, {
+    const response = NextResponse.redirect(
+      new URL(user.roles && user.roles.length > 0 ? '/' : '/select-role', request.nextUrl.origin)
+    );
+    
+    response.cookies.set('session', sessionId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/',
     });
 
-    // Redirect based on whether user has selected roles
-    const baseUrl = request.nextUrl.origin;
-    if (!user.roles || user.roles.length === 0) {
-      return NextResponse.redirect(new URL('/select-role', baseUrl));
-    }
-
-    return NextResponse.redirect(new URL('/', baseUrl));
+    return response;
   } catch (error: any) {
     console.error('Error verifying magic link:', error);
+    console.error('Error details:', error.stack);
     const baseUrl = request.nextUrl.origin;
-    return NextResponse.redirect(new URL('/login?error=verification_failed', baseUrl));
+    return NextResponse.redirect(new URL(`/login?error=verification_failed&details=${encodeURIComponent(error.message)}`, baseUrl));
   }
 }
