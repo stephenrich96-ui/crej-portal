@@ -54,7 +54,11 @@ export default async function TrainingsPage() {
         {Object.entries(trainingsByProgram).map(([program, programTrainings]) => {
           if (programTrainings.length === 0) return null;
 
-          // Separate trainings with deadlines and organize by priority
+          // Separate trainings by category
+          const startHere = programTrainings.filter(t => 
+            t.title.toLowerCase().includes('start here')
+          );
+          
           const withDeadlines = programTrainings.filter(t => 
             t.title.toLowerCase().includes('deadline') || 
             t.title.toLowerCase().includes('due by') ||
@@ -65,13 +69,44 @@ export default async function TrainingsPage() {
             t.description?.toLowerCase().includes('june 5, 2026')
           );
           
-          const startHere = programTrainings.filter(t => 
-            t.title.toLowerCase().includes('start here')
+          // Initial required (order 10-15)
+          const initialRequired = programTrainings.filter(t => 
+            !t.title.toLowerCase().includes('start here') &&
+            !withDeadlines.includes(t) &&
+            (t.requirements?.length ?? 0) > 0 &&
+            (t.order >= 10 && t.order < 20)
           );
           
+          // FY26 required (order 20-35) - includes disability conditions
+          const fy26Required = programTrainings.filter(t => 
+            !t.title.toLowerCase().includes('start here') &&
+            !withDeadlines.includes(t) &&
+            (t.requirements?.length ?? 0) > 0 &&
+            (t.order >= 20 && t.order < 40)
+          );
+          
+          // Annual/Alternate year (order 30-45)
+          const annualRequired = programTrainings.filter(t => 
+            !t.title.toLowerCase().includes('start here') &&
+            !withDeadlines.includes(t) &&
+            (t.requirements?.length ?? 0) > 0 &&
+            (t.order >= 30 && t.order < 50)
+          );
+          
+          // Optional trainings (order 100+ or no requirements)
+          const optional = programTrainings.filter(t => 
+            (t.requirements?.length ?? 0) === 0 || t.order >= 100
+          );
+          
+          // Regular required (everything else with requirements)
           const regular = programTrainings.filter(t => 
             !t.title.toLowerCase().includes('start here') &&
-            !withDeadlines.includes(t)
+            !withDeadlines.includes(t) &&
+            !initialRequired.includes(t) &&
+            !fy26Required.includes(t) &&
+            !annualRequired.includes(t) &&
+            !optional.includes(t) &&
+            (t.requirements?.length ?? 0) > 0
           );
 
           return (
@@ -193,6 +228,159 @@ export default async function TrainingsPage() {
                     </div>
                   )}
 
+                  {/* Initial Required Trainings (60 days) */}
+                  {initialRequired.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-black mb-3 pb-2 border-b border-crej-primary">
+                        Initial Required Trainings (Due in 60 Days)
+                      </h3>
+                      <div className="space-y-4">
+                        {initialRequired.map((training) => {
+                          const isCompleted = training.completions.length > 0;
+                          const completion = training.completions[0];
+
+                          return (
+                            <div
+                              key={training.id}
+                              className={`flex items-center justify-between p-4 border rounded-lg transition-all ${
+                                isCompleted ? 'bg-green-50/50 border-green-200' : 'bg-white border-gray-200 hover:border-gray-300'
+                              }`}
+                            >
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2">
+                                  {training.videoUrl ? (
+                                    <PlayCircle className="h-5 w-5 text-crej-primary" />
+                                  ) : (
+                                    <FileText className="h-5 w-5 text-gray-600" />
+                                  )}
+                                  <h3 className="font-medium text-gray-900">{training.title}</h3>
+                                  {isCompleted && (
+                                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                                  )}
+                                </div>
+                                {training.description && (
+                                  <p className="text-sm text-gray-600 mt-1">{training.description}</p>
+                                )}
+                                {isCompleted && completion && (
+                                  <p className="text-xs text-green-600 mt-2">
+                                    Completed: {formatDate(completion.completedAt)}
+                                  </p>
+                                )}
+                              </div>
+                              <Link href={`/trainings/${training.id}`}>
+                                <Button variant={isCompleted ? 'outline' : 'default'} size="sm" className="bg-crej-primary hover:bg-crej-dark">
+                                  {isCompleted ? 'Review' : 'Start'}
+                                </Button>
+                              </Link>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* FY26 Required Trainings */}
+                  {fy26Required.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-black mb-3 pb-2 border-b border-crej-primary">
+                        More Required Courses (FY26)
+                      </h3>
+                      <div className="space-y-4">
+                        {fy26Required.map((training) => {
+                          const isCompleted = training.completions.length > 0;
+                          const completion = training.completions[0];
+
+                          return (
+                            <div
+                              key={training.id}
+                              className={`flex items-center justify-between p-4 border rounded-lg transition-all ${
+                                isCompleted ? 'bg-green-50/50 border-green-200' : 'bg-white border-gray-200 hover:border-gray-300'
+                              }`}
+                            >
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2">
+                                  {training.videoUrl ? (
+                                    <PlayCircle className="h-5 w-5 text-crej-primary" />
+                                  ) : (
+                                    <FileText className="h-5 w-5 text-gray-600" />
+                                  )}
+                                  <h3 className="font-medium text-gray-900">{training.title}</h3>
+                                  {isCompleted && (
+                                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                                  )}
+                                </div>
+                                {training.description && (
+                                  <p className="text-sm text-gray-600 mt-1">{training.description}</p>
+                                )}
+                                {isCompleted && completion && (
+                                  <p className="text-xs text-green-600 mt-2">
+                                    Completed: {formatDate(completion.completedAt)}
+                                  </p>
+                                )}
+                              </div>
+                              <Link href={`/trainings/${training.id}`}>
+                                <Button variant={isCompleted ? 'outline' : 'default'} size="sm" className="bg-crej-primary hover:bg-crej-dark">
+                                  {isCompleted ? 'Review' : 'Start'}
+                                </Button>
+                              </Link>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Annual/Alternate Year Required */}
+                  {annualRequired.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-black mb-3 pb-2 border-b border-gray-300">
+                        Annual & Alternate Year Required Trainings
+                      </h3>
+                      <div className="space-y-4">
+                        {annualRequired.map((training) => {
+                          const isCompleted = training.completions.length > 0;
+                          const completion = training.completions[0];
+
+                          return (
+                            <div
+                              key={training.id}
+                              className={`flex items-center justify-between p-4 border rounded-lg transition-all ${
+                                isCompleted ? 'bg-green-50/50 border-green-200' : 'bg-white border-gray-200 hover:border-gray-300'
+                              }`}
+                            >
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2">
+                                  {training.videoUrl ? (
+                                    <PlayCircle className="h-5 w-5 text-crej-primary" />
+                                  ) : (
+                                    <FileText className="h-5 w-5 text-gray-600" />
+                                  )}
+                                  <h3 className="font-medium text-gray-900">{training.title}</h3>
+                                  {isCompleted && (
+                                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                                  )}
+                                </div>
+                                {training.description && (
+                                  <p className="text-sm text-gray-600 mt-1">{training.description}</p>
+                                )}
+                                {isCompleted && completion && (
+                                  <p className="text-xs text-green-600 mt-2">
+                                    Completed: {formatDate(completion.completedAt)}
+                                  </p>
+                                )}
+                              </div>
+                              <Link href={`/trainings/${training.id}`}>
+                                <Button variant={isCompleted ? 'outline' : 'default'} size="sm" className="bg-crej-primary hover:bg-crej-dark">
+                                  {isCompleted ? 'Review' : 'Start'}
+                                </Button>
+                              </Link>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Regular Required Trainings */}
                   {regular.length > 0 && (
                     <div>
@@ -235,6 +423,63 @@ export default async function TrainingsPage() {
                               <Link href={`/trainings/${training.id}`}>
                                 <Button variant={isCompleted ? 'outline' : 'default'} size="sm" className="bg-crej-primary hover:bg-crej-dark">
                                   {isCompleted ? 'Review' : 'Start'}
+                                </Button>
+                              </Link>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Optional Trainings */}
+                  {optional.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-black mb-3 pb-2 border-b border-gray-300">
+                        Optional Trainings
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-4">
+                        These trainings are optional but count toward your 30 hours of annual continuing education. All optional trainings can be found in the Utah Learning Portal.
+                      </p>
+                      <div className="space-y-4">
+                        {optional.map((training) => {
+                          const isCompleted = training.completions.length > 0;
+                          const completion = training.completions[0];
+
+                          return (
+                            <div
+                              key={training.id}
+                              className={`flex items-center justify-between p-4 border rounded-lg transition-all ${
+                                isCompleted ? 'bg-green-50/50 border-green-200' : 'bg-gray-50 border-gray-200 hover:border-gray-300'
+                              }`}
+                            >
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2">
+                                  {training.videoUrl ? (
+                                    <PlayCircle className="h-5 w-5 text-gray-500" />
+                                  ) : (
+                                    <FileText className="h-5 w-5 text-gray-500" />
+                                  )}
+                                  <h3 className="font-medium text-gray-700">{training.title}</h3>
+                                  {isCompleted && (
+                                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                                  )}
+                                  <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
+                                    Optional
+                                  </span>
+                                </div>
+                                {training.description && (
+                                  <p className="text-sm text-gray-600 mt-1">{training.description}</p>
+                                )}
+                                {isCompleted && completion && (
+                                  <p className="text-xs text-green-600 mt-2">
+                                    Completed: {formatDate(completion.completedAt)}
+                                  </p>
+                                )}
+                              </div>
+                              <Link href={`/trainings/${training.id}`}>
+                                <Button variant={isCompleted ? 'outline' : 'outline'} size="sm">
+                                  {isCompleted ? 'Review' : 'View'}
                                 </Button>
                               </Link>
                             </div>
