@@ -26,6 +26,7 @@ const requiredTrainings = [
     videoUrl: '', // Assigned through ULP
     documentUrl: 'https://utahlearningportal.com',
     requiredRoles: ['DSPD_SUPPORT_COORDINATOR', 'DSPD_MANAGER'],
+    order: 10,
   },
   {
     title: 'DSPD SCE: Profound and complex disabilities (Open Future Learning)',

@@ -16,7 +16,8 @@
     "prisma:studio": "prisma studio",
     "prisma:seed": "tsx prisma/seed.ts",
     "content:sync": "tsx scripts/sync-content.ts",
-    "trainings:create-dspd": "tsx scripts/create-dspd-trainings.ts"
+    "trainings:create-dspd": "tsx scripts/create-dspd-trainings.ts",
+    "trainings:update-orders": "tsx scripts/update-training-orders.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.0.0",
