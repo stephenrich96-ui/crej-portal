@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/layouts/dashboard-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import Link from 'next/link';
 export default function Form08Page() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const [formData, setFormData] = useState({
     // Personal Information
     firstName: '',
@@ -38,6 +39,24 @@ export default function Form08Page() {
     signature: '',
     signatureDate: new Date().toISOString().split('T')[0],
   });
+
+  useEffect(() => {
+    // Fetch user session
+    fetch('/api/auth/session')
+      .then(res => res.json())
+      .then(data => {
+        if (data.user) {
+          setUser(data.user);
+          // Pre-fill email if available
+          if (data.user.email && !formData.email) {
+            setFormData(prev => ({ ...prev, email: data.user.email }));
+          }
+        } else {
+          router.push('/login');
+        }
+      })
+      .catch(() => router.push('/login'));
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -89,9 +108,13 @@ export default function Form08Page() {
     }
   };
 
+  if (!user) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto py-8 px-4">
+    <DashboardLayout user={user}>
+      <div className="max-w-4xl mx-auto">
         <Link href="/forms" className="inline-flex items-center text-crej-primary hover:text-crej-dark mb-6">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Forms
@@ -331,7 +354,7 @@ export default function Form08Page() {
                   ) : (
                     <Download className="h-4 w-4 mr-2" />
                   )}
-                  Download PDF
+                  Download Form
                 </Button>
                 <Button
                   type="button"
@@ -345,13 +368,13 @@ export default function Form08Page() {
                   ) : (
                     <Mail className="h-4 w-4 mr-2" />
                   )}
-                  Email to Me
+                  Copy to Clipboard
                 </Button>
               </div>
             </form>
           </CardContent>
         </Card>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
